@@ -58,7 +58,7 @@ export const ModelNode = T.object({
 export class ModelNodeDefinition extends NodeDefinition<ModelNode> {
 	static type = 'model'
 	static validator = ModelNode
-	title = 'Load model'
+	title = 'Model'
 	heading = 'Model'
 	icon = (<ModelIcon />)
 	category = 'input'
