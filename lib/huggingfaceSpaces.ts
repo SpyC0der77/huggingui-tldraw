@@ -2,7 +2,7 @@ interface RunSpaceParams {
 	spaceId: string
 	apiName: string
 	data: unknown[]
-	accessToken: string
+	accessToken?: string | null
 }
 
 interface SpaceMetadata {
@@ -20,7 +20,9 @@ export async function runHuggingFaceSpace({
 	const endpoint = `${baseUrl}/gradio_api/call${normalizedApiName}`
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
-		Authorization: `Bearer ${accessToken}`,
+	}
+	if (accessToken) {
+		headers.Authorization = `Bearer ${accessToken}`
 	}
 
 	const startResponse = await fetch(endpoint, {
@@ -40,9 +42,7 @@ export async function runHuggingFaceSpace({
 	}
 
 	const streamResponse = await fetch(`${endpoint}/${startPayload.event_id}`, {
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-		},
+		headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
 	})
 
 	if (!streamResponse.ok) {
@@ -58,19 +58,15 @@ export async function runHuggingFaceSpace({
 }
 
 export function extractImageUrlFromSpaceOutput(value: unknown, baseUrl: string): string | null {
+	const fromFileData = extractImageUrlFromFileData(value, baseUrl)
+	if (fromFileData) return fromFileData
+
 	const candidates: string[] = []
 	collectStringCandidates(value, candidates)
 
 	for (const candidate of candidates) {
-		if (candidate.startsWith('data:image/')) {
-			return candidate
-		}
-		if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
-			return candidate
-		}
-		if (candidate.startsWith('/')) {
-			return `${baseUrl}${candidate}`
-		}
+		const resolved = resolveImageCandidate(candidate, baseUrl)
+		if (resolved) return resolved
 	}
 
 	return null
@@ -101,6 +97,81 @@ function collectStringCandidates(value: unknown, out: string[]) {
 		}
 		collectStringCandidates(nested, out)
 	}
+}
+
+function extractImageUrlFromFileData(value: unknown, baseUrl: string): string | null {
+	if (!value || typeof value !== 'object') return null
+
+	if (Array.isArray(value)) {
+		for (const entry of value) {
+			const resolved = extractImageUrlFromFileData(entry, baseUrl)
+			if (resolved) return resolved
+		}
+		return null
+	}
+
+	const obj = value as Record<string, unknown>
+	const hasPath = typeof obj.path === 'string' && obj.path.length > 0
+	const hasUrl = typeof obj.url === 'string' && obj.url.length > 0
+	const mimeType = typeof obj.mime_type === 'string' ? obj.mime_type : null
+
+	if (hasUrl) {
+		const resolved = resolveImageCandidate(String(obj.url), baseUrl)
+		if (resolved && (!mimeType || mimeType.startsWith('image/'))) {
+			return resolved
+		}
+	}
+
+	if (hasPath) {
+		const pathValue = String(obj.path)
+		const looksLikeImagePath =
+			/\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(pathValue) ||
+			(mimeType ? mimeType.startsWith('image/') : true)
+		if (looksLikeImagePath) {
+			return buildGradioFileUrl(baseUrl, pathValue)
+		}
+	}
+
+	for (const nested of Object.values(obj)) {
+		const resolved = extractImageUrlFromFileData(nested, baseUrl)
+		if (resolved) return resolved
+	}
+
+	return null
+}
+
+function resolveImageCandidate(candidate: string, baseUrl: string): string | null {
+	const trimmed = candidate.trim()
+	if (!trimmed) return null
+
+	if (trimmed.startsWith('data:image/')) {
+		return trimmed
+	}
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+		return trimmed
+	}
+	if (trimmed.startsWith('/gradio_api/file=')) {
+		return `${baseUrl}${trimmed}`
+	}
+	if (trimmed.startsWith('gradio_api/file=')) {
+		return `${baseUrl}/${trimmed}`
+	}
+	if (trimmed.startsWith('/')) {
+		// Treat local temp file paths as Gradio file handles.
+		if (trimmed.startsWith('/tmp/') || trimmed.startsWith('/var/')) {
+			return buildGradioFileUrl(baseUrl, trimmed)
+		}
+		return `${baseUrl}${trimmed}`
+	}
+	if (trimmed.startsWith('file=')) {
+		return `${baseUrl}/gradio_api/${trimmed}`
+	}
+
+	return null
+}
+
+function buildGradioFileUrl(baseUrl: string, path: string): string {
+	return `${baseUrl}/gradio_api/file=${encodeURIComponent(path)}`
 }
 
 function parseSpaceEventStream(streamText: string): unknown {
@@ -138,13 +209,14 @@ function parseSpaceEventStream(streamText: string): unknown {
 	return latestJson
 }
 
-async function resolveSpaceBaseUrl(spaceId: string, accessToken: string): Promise<string> {
+export async function resolveSpaceBaseUrl(
+	spaceId: string,
+	accessToken?: string | null
+): Promise<string> {
 	const fallback = `https://${spaceId.replace(/\//g, '-')}.hf.space`
 	try {
 		const response = await fetch(`https://huggingface.co/api/spaces/${spaceId}`, {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-			},
+			headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
 		})
 
 		if (!response.ok) {
@@ -156,8 +228,24 @@ async function resolveSpaceBaseUrl(spaceId: string, accessToken: string): Promis
 			return fallback
 		}
 
-		return `https://${payload.host}`
+		return normalizeSpaceBaseUrl(payload.host, fallback)
 	} catch {
 		return fallback
 	}
+}
+
+function normalizeSpaceBaseUrl(host: string, fallback: string): string {
+	const value = host.trim()
+	if (!value) return fallback
+
+	if (value.startsWith('http://') || value.startsWith('https://')) {
+		try {
+			const url = new URL(value)
+			return `${url.protocol}//${url.host}`
+		} catch {
+			return fallback
+		}
+	}
+
+	return `https://${value}`
 }

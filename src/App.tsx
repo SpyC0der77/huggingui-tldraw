@@ -112,7 +112,7 @@ function App() {
  */
 function createDefaultPipeline(editor: Editor) {
 	const modelId = createShapeId()
-	const promptId = createShapeId()
+	const textId = createShapeId()
 	const generateId = createShapeId()
 	const previewId = createShapeId()
 
@@ -134,13 +134,13 @@ function createDefaultPipeline(editor: Editor) {
 			},
 		},
 		{
-			id: promptId,
+			id: textId,
 			type: 'node',
 			x: 100,
 			y: 450,
 			props: {
 				node: {
-					type: 'prompt',
+					type: 'text',
 					text: 'a photo of a cat sitting on a windowsill',
 				},
 			},

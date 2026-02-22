@@ -18,13 +18,23 @@ export const DEFAULT_NODE_SPACING_PX = 60
  * has a CSS color used to tint ports and connections so users can see at a
  * glance which outputs are compatible with which inputs.
  */
-export type PortDataType = 'image' | 'text' | 'model' | 'number' | 'latent' | 'any'
+export type PortDataType =
+	| 'image'
+	| 'text'
+	| 'model'
+	| 'space'
+	| 'number'
+	| 'boolean'
+	| 'latent'
+	| 'any'
 
 export const PORT_TYPE_COLORS: Record<PortDataType, string> = {
 	image: '#c060e0',
 	text: '#4caf50',
 	model: '#2196f3',
+	space: '#14b8a6',
 	number: '#9e9e9e',
+	boolean: '#00a884',
 	latent: '#ff9800',
 	any: '#c08520',
 }

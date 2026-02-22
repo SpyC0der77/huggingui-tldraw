@@ -2,6 +2,17 @@ import { HF_SESSION_COOKIE_NAME } from './huggingfaceOAuth'
 import { getSessionById } from './huggingfaceSessionStore'
 
 export function requireHuggingFaceAccessToken(request: Request): string {
+	const token = getOptionalHuggingFaceAccessToken(request)
+	if (token) {
+		return token
+	}
+
+	throw new Error(
+		'No Hugging Face access token found. Sign in with Hugging Face or set HF_TOKEN.'
+	)
+}
+
+export function getOptionalHuggingFaceAccessToken(request: Request): string | null {
 	const token = process.env.HF_TOKEN
 	if (token) {
 		return token
@@ -10,13 +21,7 @@ export function requireHuggingFaceAccessToken(request: Request): string {
 	const cookieHeader = request.headers.get('cookie') ?? ''
 	const sessionId = parseCookie(cookieHeader, HF_SESSION_COOKIE_NAME)
 	const session = getSessionById(sessionId)
-	if (session?.accessToken) {
-		return session.accessToken
-	}
-
-	throw new Error(
-		'No Hugging Face access token found. Sign in with Hugging Face or set HF_TOKEN.'
-	)
+	return session?.accessToken ?? null
 }
 
 export function getSessionFromRequest(request: Request) {

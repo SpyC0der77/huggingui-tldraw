@@ -1,6 +1,5 @@
 /**
- * Frontend API client for calling the Cloudflare Worker backend.
- * Each function corresponds to a worker endpoint.
+ * Frontend API client for application endpoints.
  */
 
 export interface GenerateParams {
@@ -20,10 +19,6 @@ export interface GenerateResult {
 	seed: number
 }
 
-/**
- * Call the /api/generate endpoint to create an AI-generated image.
- * Falls back to a local placeholder if the worker is not available.
- */
 export async function apiGenerate(params: GenerateParams): Promise<GenerateResult> {
 	try {
 		const response = await fetch('/api/generate', {
@@ -44,3 +39,73 @@ export async function apiGenerate(params: GenerateParams): Promise<GenerateResul
 	}
 }
 
+export interface SpaceEndpointParameter {
+	label: string
+	parameter_name: string
+	parameter_has_default?: boolean
+	parameter_default?: unknown
+	type?: {
+		type?: string
+		enum?: string[]
+	}
+	component?: string
+}
+
+export interface SpaceEndpointInfo {
+	apiName: string
+	parameters?: SpaceEndpointParameter[]
+	returns?: unknown[]
+	show_api?: boolean
+}
+
+export interface SpaceInfoResult {
+	spaceId: string
+	baseUrl: string
+	endpoints: SpaceEndpointInfo[]
+}
+
+export async function apiSpaceInfo(spaceId: string): Promise<SpaceInfoResult> {
+	const response = await fetch('/api/space-info', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ spaceId }),
+	})
+
+	if (!response.ok) {
+		const err = await response.json().catch(() => ({ error: response.statusText }))
+		throw new Error((err as { error?: string }).error ?? 'Failed to fetch Space schema')
+	}
+
+	return (await response.json()) as SpaceInfoResult
+}
+
+export interface RunSpaceParams {
+	spaceId: string
+	apiName: string
+	args: unknown[]
+}
+
+export interface RunSpaceResult {
+	spaceId: string
+	apiName: string
+	baseUrl: string
+	output: unknown
+	imageUrl: string | null
+}
+
+export async function apiRunSpace(params: RunSpaceParams): Promise<RunSpaceResult> {
+	const response = await fetch('/api/run-space', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(params),
+	})
+
+	if (!response.ok) {
+		const err = await response.json().catch(() => ({ error: response.statusText }))
+		throw new Error((err as { error?: string }).error ?? 'Failed to run Space endpoint')
+	}
+
+	return (await response.json()) as RunSpaceResult
+}

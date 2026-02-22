@@ -157,6 +157,14 @@ body {
 		&:focus {
 			border-color: var(--tl-color-selected);
 		}
+
+		&:disabled {
+			background: color-mix(in srgb, var(--tl-color-background) 88%, var(--tl-color-text) 12%);
+			color: var(--tl-color-text-3);
+			border-color: var(--tl-color-hint);
+			opacity: 0.65;
+			cursor: not-allowed;
+		}
 	}
 
 	input[type='range'] {
@@ -187,6 +195,14 @@ body {
 
 		&:focus {
 			border-color: var(--tl-color-selected);
+		}
+
+		&:disabled {
+			background: color-mix(in srgb, var(--tl-color-background) 88%, var(--tl-color-text) 12%);
+			color: var(--tl-color-text-3);
+			border-color: var(--tl-color-hint);
+			opacity: 0.65;
+			cursor: not-allowed;
 		}
 	}
 }
