@@ -101,7 +101,6 @@ function App() {
 					</div>
 				) : null}
 				<Tldraw
-					persistenceKey="huggingui-pipeline-v3"
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
