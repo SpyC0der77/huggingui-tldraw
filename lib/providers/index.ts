@@ -1,4 +1,4 @@
-import { replicate } from './replicate'
+import { huggingface } from './huggingface'
 import type { ImageProvider } from './types'
 
 export type {
@@ -9,11 +9,12 @@ export type {
 	UpscaleResult,
 } from './types'
 
-export function getProvider(_name: string): ImageProvider {
-	return replicate
+export function getProvider(name: string): ImageProvider {
+	void name
+	return huggingface
 }
 
-export function getUpscaleProvider(_method: string): ImageProvider {
-	return replicate
+export function getUpscaleProvider(method: string): ImageProvider {
+	void method
+	return huggingface
 }
-

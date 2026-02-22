@@ -1,5 +1,6 @@
 import classNames from 'classnames'
 import { T, useEditor, useValue } from 'tldraw'
+import { describeModelRef } from '@/lib/modelRef'
 import { apiGenerate } from '../../api/pipelineApi'
 import { GenerateIcon } from '../../components/icons/GenerateIcon'
 import {
@@ -31,6 +32,7 @@ import {
 export type GenerateNode = T.TypeOf<typeof GenerateNode>
 export const GenerateNode = T.object({
 	type: T.literal('generate'),
+	promptText: T.string,
 	steps: T.number,
 	cfgScale: T.number,
 	seed: T.number,
@@ -48,6 +50,7 @@ export class GenerateNodeDefinition extends NodeDefinition<GenerateNode> {
 	getDefault(): GenerateNode {
 		return {
 			type: 'generate',
+			promptText: 'a cinematic photo of a mountain landscape at sunrise',
 			steps: 20,
 			cfgScale: 7,
 			seed: Math.floor(Math.random() * 99999),
@@ -104,14 +107,14 @@ export class GenerateNodeDefinition extends NodeDefinition<GenerateNode> {
 		node: GenerateNode,
 		inputs: InputValues
 	): Promise<ExecutionResult> {
-		const model = (inputs.model as string) ?? 'flux:flux-dev'
+		const model = (inputs.model as string) ?? 'hf:auto:black-forest-labs/FLUX.1-schnell'
 		const rawPrompt = inputs.prompt
-		const promptValues = Array.isArray(rawPrompt) ? rawPrompt : [rawPrompt ?? 'default']
+		const promptValues = Array.isArray(rawPrompt) ? rawPrompt : [rawPrompt ?? node.promptText]
 		const prompt =
 			promptValues
 				.filter((v) => v != null)
 				.map(String)
-				.join(', ') || 'default'
+				.join(', ') || node.promptText
 		const negativePrompt = inputs.negative as string | undefined
 		const referenceImageUrl = (inputs.image as string) ?? undefined
 
@@ -173,7 +176,11 @@ function GenerateNodeComponent({ shape, node }: NodeComponentProps<GenerateNode>
 				<NodePortLabel dataType="model">Model</NodePortLabel>
 				{modelInput ? (
 					<span className="NodeRow-connected-value">
-						{modelInput.isOutOfDate ? <NodePlaceholder /> : String(modelInput.value)}
+						{modelInput.isOutOfDate ? (
+							<NodePlaceholder />
+						) : (
+							describeModelRef(String(modelInput.value ?? ''))
+						)}
 					</span>
 				) : (
 					<span className="NodeRow-disconnected">not connected</span>
@@ -201,7 +208,18 @@ function GenerateNodeComponent({ shape, node }: NodeComponentProps<GenerateNode>
 						)}
 					</span>
 				) : (
-					<span className="NodeRow-disconnected">not connected</span>
+					<input
+						type="text"
+						value={node.promptText}
+						onChange={(e) =>
+							updateNode<GenerateNode>(editor, shape, (n) => ({
+								...n,
+								promptText: e.target.value,
+							}))
+						}
+						onPointerDown={(e) => e.stopPropagation()}
+						placeholder="Enter prompt..."
+					/>
 				)}
 			</NodeRow>
 			<NodeRow>

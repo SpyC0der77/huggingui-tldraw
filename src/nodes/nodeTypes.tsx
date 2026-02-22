@@ -7,23 +7,14 @@ import {
 } from '../constants'
 import { PortId, ShapePort } from '../ports/Port'
 import { NodeShape } from './NodeShapeUtil'
-import { AdjustNodeDefinition } from './types/AdjustNode'
-import { BlendNodeDefinition } from './types/BlendNode'
-import { CaptureNodeDefinition } from './types/CaptureNode'
-import { ControlNetNodeDefinition } from './types/ControlNetNode'
 import { GenerateNodeDefinition } from './types/GenerateNode'
-import { GenerateTextNodeDefinition } from './types/GenerateTextNode'
-import { IPAdapterNodeDefinition } from './types/IPAdapterNode'
 import { IteratorNodeDefinition } from './types/IteratorNode'
 import { LoadImageNodeDefinition } from './types/LoadImageNode'
 import { ModelNodeDefinition } from './types/ModelNode'
 import { NumberNodeDefinition } from './types/NumberNode'
 import { PreviewNodeDefinition } from './types/PreviewNode'
-import { PromptConcatNodeDefinition } from './types/PromptConcatNode'
 import { PromptNodeDefinition } from './types/PromptNode'
 import { RouterNodeDefinition } from './types/RouterNode'
-import { StyleTransferNodeDefinition } from './types/StyleTransferNode'
-import { UpscaleNodeDefinition } from './types/UpscaleNode'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -36,20 +27,11 @@ export const NodeDefinitions = {
 	model: ModelNodeDefinition,
 	prompt: PromptNodeDefinition,
 	generate: GenerateNodeDefinition,
-	generate_text: GenerateTextNodeDefinition,
-	controlnet: ControlNetNodeDefinition,
 	load_image: LoadImageNodeDefinition,
 	preview: PreviewNodeDefinition,
-	blend: BlendNodeDefinition,
-	adjust: AdjustNodeDefinition,
-	upscale: UpscaleNodeDefinition,
-	ip_adapter: IPAdapterNodeDefinition,
-	style_transfer: StyleTransferNodeDefinition,
-	prompt_concat: PromptConcatNodeDefinition,
 	number: NumberNodeDefinition,
 	router: RouterNodeDefinition,
 	iterator: IteratorNodeDefinition,
-	capture: CaptureNodeDefinition,
 } satisfies Record<string, NodeDefinitionConstructor<any>>
 
 /**

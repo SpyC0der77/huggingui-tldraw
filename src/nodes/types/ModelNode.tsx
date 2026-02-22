@@ -1,4 +1,11 @@
 import { T, useEditor } from 'tldraw'
+import {
+	DEFAULT_HF_MODEL_ID,
+	DEFAULT_HF_PROVIDER,
+	DEFAULT_SPACE_API_NAME,
+	DEFAULT_SPACE_ARGS_TEMPLATE,
+	encodeModelRef,
+} from '@/lib/modelRef'
 import { ModelIcon } from '../../components/icons/ModelIcon'
 import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../constants'
 import { ShapePort } from '../../ports/Port'
@@ -13,35 +20,41 @@ import {
 	updateNode,
 } from './shared'
 
-interface ModelInfo {
+interface ProviderInfo {
 	id: string
 	label: string
 }
 
-const PROVIDERS: Record<string, { label: string; models: ModelInfo[] }> = {
-	flux: {
-		label: 'Flux',
-		models: [
-			{ id: 'flux-dev', label: 'Flux Dev' },
-			{ id: 'flux-schnell', label: 'Flux Schnell' },
-			{ id: 'flux-pro', label: 'Flux Pro' },
-		],
-	},
-	google: {
-		label: 'Google',
-		models: [
-			{ id: 'nano-banana-pro', label: 'Nano Banana Pro' },
-			{ id: 'nano-banana', label: 'Nano Banana' },
-			{ id: 'imagen-4-fast', label: 'Imagen 4 Fast' },
-		],
-	},
-}
+const PROVIDERS: ProviderInfo[] = [
+	{ id: 'auto', label: 'Auto (HF Router)' },
+	{ id: 'hf-inference', label: 'HF Inference' },
+	{ id: 'fal-ai', label: 'fal' },
+	{ id: 'together', label: 'Together' },
+	{ id: 'replicate', label: 'Replicate (via HF)' },
+	{ id: 'nebius', label: 'Nebius' },
+	{ id: 'novita', label: 'Novita' },
+	{ id: 'nscale', label: 'Nscale' },
+	{ id: 'wavespeed', label: 'WaveSpeed' },
+	{ id: 'space', label: 'Hugging Face Space' },
+]
+
+const HUGGING_FACE_MODELS = [
+	'black-forest-labs/FLUX.1-schnell',
+	'black-forest-labs/FLUX.1-dev',
+	'black-forest-labs/FLUX.1.1-pro',
+	'stabilityai/stable-diffusion-xl-base-1.0',
+	'stabilityai/stable-diffusion-3.5-large',
+	'playgroundai/playground-v2.5-1024px-aesthetic',
+]
 
 export type ModelNode = T.TypeOf<typeof ModelNode>
 export const ModelNode = T.object({
 	type: T.literal('model'),
 	provider: T.string,
 	modelId: T.string,
+	spaceId: T.string,
+	spaceApiName: T.string,
+	spaceArgsTemplate: T.string,
 })
 
 export class ModelNodeDefinition extends NodeDefinition<ModelNode> {
@@ -54,11 +67,17 @@ export class ModelNodeDefinition extends NodeDefinition<ModelNode> {
 	getDefault(): ModelNode {
 		return {
 			type: 'model',
-			provider: 'flux',
-			modelId: 'flux-dev',
+			provider: DEFAULT_HF_PROVIDER,
+			modelId: DEFAULT_HF_MODEL_ID,
+			spaceId: '',
+			spaceApiName: DEFAULT_SPACE_API_NAME,
+			spaceArgsTemplate: DEFAULT_SPACE_ARGS_TEMPLATE,
 		}
 	}
-	getBodyHeightPx() {
+	getBodyHeightPx(_shape: NodeShape, node: ModelNode) {
+		if (node.provider === 'space') {
+			return NODE_ROW_HEIGHT_PX * 3 + 88
+		}
 		return NODE_ROW_HEIGHT_PX * 2
 	}
 	getPorts(): Record<string, ShapePort> {
@@ -73,13 +92,41 @@ export class ModelNodeDefinition extends NodeDefinition<ModelNode> {
 		}
 	}
 	async execute(_shape: NodeShape, node: ModelNode): Promise<ExecutionResult> {
-		await sleep(500)
-		return { output: `${node.provider}:${node.modelId}` }
+		await sleep(250)
+		return {
+			output:
+				node.provider === 'space'
+					? encodeModelRef({
+							kind: 'space',
+							spaceId: node.spaceId.trim(),
+							apiName: normalizeApiName(node.spaceApiName),
+							argsTemplate: node.spaceArgsTemplate.trim() || DEFAULT_SPACE_ARGS_TEMPLATE,
+						})
+					: encodeModelRef({
+							kind: 'hf',
+							provider: node.provider,
+							modelId: node.modelId.trim() || DEFAULT_HF_MODEL_ID,
+						}),
+		}
 	}
 	getOutputInfo(shape: NodeShape, node: ModelNode): InfoValues {
+		const output =
+			node.provider === 'space'
+				? encodeModelRef({
+						kind: 'space',
+						spaceId: node.spaceId.trim(),
+						apiName: normalizeApiName(node.spaceApiName),
+						argsTemplate: node.spaceArgsTemplate.trim() || DEFAULT_SPACE_ARGS_TEMPLATE,
+					})
+				: encodeModelRef({
+						kind: 'hf',
+						provider: node.provider,
+						modelId: node.modelId.trim() || DEFAULT_HF_MODEL_ID,
+					})
+
 		return {
 			output: {
-				value: `${node.provider}:${node.modelId}`,
+				value: output,
 				isOutOfDate: shape.props.isOutOfDate,
 				dataType: 'model',
 			},
@@ -90,8 +137,6 @@ export class ModelNodeDefinition extends NodeDefinition<ModelNode> {
 
 function ModelNodeComponent({ shape, node }: NodeComponentProps<ModelNode>) {
 	const editor = useEditor()
-	const provider = PROVIDERS[node.provider] ?? PROVIDERS['flux']
-	const models = provider.models
 
 	return (
 		<>
@@ -100,41 +145,94 @@ function ModelNodeComponent({ shape, node }: NodeComponentProps<ModelNode>) {
 				<select
 					value={node.provider}
 					onChange={(e) => {
-						const newProvider = e.target.value
-						const newModels = PROVIDERS[newProvider]?.models
-						const firstModel = newModels?.[0]?.id ?? ''
+						const provider = e.target.value
 						updateNode<ModelNode>(editor, shape, (n) => ({
 							...n,
-							provider: newProvider,
-							modelId: firstModel,
+							provider,
+							modelId: provider === 'space' ? n.modelId : n.modelId || DEFAULT_HF_MODEL_ID,
 						}))
 					}}
 				>
-					{Object.entries(PROVIDERS).map(([id, p]) => (
-						<option key={id} value={id}>
-							{p.label}
+					{PROVIDERS.map((provider) => (
+						<option key={provider.id} value={provider.id}>
+							{provider.label}
 						</option>
 					))}
 				</select>
 			</NodeRow>
-			<NodeRow>
-				<span className="NodeInputRow-label">Model</span>
-				<select
-					value={node.modelId}
-					onChange={(e) =>
-						updateNode<ModelNode>(editor, shape, (n) => ({
-							...n,
-							modelId: e.target.value,
-						}))
-					}
-				>
-					{models.map((m) => (
-						<option key={m.id} value={m.id}>
-							{m.label}
-						</option>
-					))}
-				</select>
-			</NodeRow>
+
+			{node.provider === 'space' ? (
+				<>
+					<NodeRow className="NodeInputRow">
+						<span className="NodeInputRow-label">Space</span>
+						<input
+							type="text"
+							value={node.spaceId}
+							onChange={(e) =>
+								updateNode<ModelNode>(editor, shape, (n) => ({
+									...n,
+									spaceId: e.target.value,
+								}))
+							}
+							placeholder="owner/space-name"
+						/>
+					</NodeRow>
+					<NodeRow className="NodeInputRow">
+						<span className="NodeInputRow-label">API</span>
+						<input
+							type="text"
+							value={node.spaceApiName}
+							onChange={(e) =>
+								updateNode<ModelNode>(editor, shape, (n) => ({
+									...n,
+									spaceApiName: e.target.value,
+								}))
+							}
+							placeholder="/predict"
+						/>
+					</NodeRow>
+					<NodeRow className="PromptNode-row">
+						<span className="NodeInputRow-label">Args</span>
+						<textarea
+							className="PromptNode-textarea"
+							value={node.spaceArgsTemplate}
+							onChange={(e) =>
+								updateNode<ModelNode>(editor, shape, (n) => ({
+									...n,
+									spaceArgsTemplate: e.target.value,
+								}))
+							}
+							placeholder='["{prompt}"]'
+						/>
+					</NodeRow>
+				</>
+			) : (
+				<NodeRow className="NodeInputRow">
+					<span className="NodeInputRow-label">Model</span>
+					<input
+						type="text"
+						list={`${shape.id}_hf_models`}
+						value={node.modelId}
+						onChange={(e) =>
+							updateNode<ModelNode>(editor, shape, (n) => ({
+								...n,
+								modelId: e.target.value,
+							}))
+						}
+						placeholder="org/model-id"
+					/>
+					<datalist id={`${shape.id}_hf_models`}>
+						{HUGGING_FACE_MODELS.map((model) => (
+							<option key={model} value={model} />
+						))}
+					</datalist>
+				</NodeRow>
+			)}
 		</>
 	)
+}
+
+function normalizeApiName(value: string): string {
+	const trimmed = value.trim() || DEFAULT_SPACE_API_NAME
+	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
 }

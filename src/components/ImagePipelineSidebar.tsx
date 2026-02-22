@@ -13,6 +13,26 @@ const CATEGORY_ORDER = ['input', 'process', 'output', 'utility']
 
 const DRAG_DISTANCE_SQ = 36 // 6px
 
+/*
+ * Task selector is intentionally disabled for now.
+ * Keep this scaffold commented so it can be restored quickly.
+ *
+ * const TASK_MODE_STORAGE_KEY = 'huggingui-task-mode'
+ * type TaskMode = 'text-to-image' | 'image-to-image' | 'text-to-text' | 'image-to-text'
+ * const TASK_OPTIONS: { id: TaskMode; label: string }[] = [
+ *   { id: 'image-to-image', label: 'Image-to-image' },
+ *   { id: 'text-to-image', label: 'Text-to-image' },
+ *   { id: 'text-to-text', label: 'Text-to-text' },
+ *   { id: 'image-to-text', label: 'Image-to-text' },
+ * ]
+ * const TASK_NODE_WHITELIST: Record<TaskMode, Set<string>> = {
+ *   'image-to-image': new Set(['model', 'load_image', 'prompt', 'generate', 'preview']),
+ *   'text-to-image': new Set(['model', 'prompt', 'generate', 'preview']),
+ *   'text-to-text': new Set(['prompt']),
+ *   'image-to-text': new Set(['load_image']),
+ * }
+ */
+
 function createNodeAtCenter(editor: Editor, node: NodeType) {
 	const shapeId = createShapeId()
 	editor.run(() => {
@@ -148,6 +168,31 @@ export function ImagePipelineSidebar({ editor }: { editor: Editor }) {
 
 	return (
 		<div className="ImagePipelineSidebar tl-theme__light">
+			{/* Task selector intentionally disabled.
+			<div className="ImagePipelineSidebar-task">
+				<div className="ImagePipelineSidebar-task-label">Task</div>
+				<div className="ImagePipelineSidebar-task-badges" role="tablist" aria-label="Task mode">
+					{TASK_OPTIONS.map((option) => {
+						const isActive = option.id === taskMode
+						return (
+							<button
+								key={option.id}
+								type="button"
+								role="tab"
+								aria-selected={isActive}
+								onClick={() => onTaskModeChange(option.id)}
+								className={cn(
+									badgeVariants({ variant: isActive ? 'default' : 'outline' }),
+									'ImagePipelineSidebar-task-badge'
+								)}
+							>
+								{option.label}
+							</button>
+						)
+					})}
+				</div>
+			</div>
+			*/}
 			<div className="ImagePipelineSidebar-header">Nodes</div>
 			<div className="ImagePipelineSidebar-list">
 				{CATEGORY_ORDER.map((cat) => {

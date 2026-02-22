@@ -51,10 +51,6 @@ export function OnCanvasNodePicker() {
 			</TldrawUiMenuGroup>
 			<TldrawUiMenuGroup id="process">
 				<OnCanvasNodePickerItem definition={nodeDefs.generate} onClose={onClose} />
-				<OnCanvasNodePickerItem definition={nodeDefs.controlnet} onClose={onClose} />
-				<OnCanvasNodePickerItem definition={nodeDefs.blend} onClose={onClose} />
-				<OnCanvasNodePickerItem definition={nodeDefs.adjust} onClose={onClose} />
-				<OnCanvasNodePickerItem definition={nodeDefs.prompt_concat} onClose={onClose} />
 			</TldrawUiMenuGroup>
 			<TldrawUiMenuGroup id="output">
 				<OnCanvasNodePickerItem definition={nodeDefs.preview} onClose={onClose} />

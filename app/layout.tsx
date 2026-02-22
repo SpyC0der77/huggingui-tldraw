@@ -2,18 +2,19 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-	title: 'TLDraw Image Pipeline',
-	description: 'Node-based image pipeline builder with TLDraw',
+	title: 'HuggingUI',
+	description:
+		'ComfyUI-style node workflows powered by Hugging Face Inference Providers and Spaces.',
 }
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode
 }>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<body>{children}</body>
+		</html>
+	)
 }

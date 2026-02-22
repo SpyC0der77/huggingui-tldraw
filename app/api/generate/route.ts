@@ -1,4 +1,6 @@
 import { setImage } from '@/lib/imageStore'
+import { parseModelRef } from '@/lib/modelRef'
+import { requireHuggingFaceAccessToken } from '@/lib/auth/huggingfaceToken'
 import { type GenerateParams, getProvider } from '@/lib/providers'
 
 export const runtime = 'nodejs'
@@ -21,12 +23,14 @@ export async function POST(request: Request) {
 		return Response.json({ error: 'prompt is required' }, { status: 400 })
 	}
 
-	const [providerName, modelId] = (body.model ?? 'flux:flux-dev').split(':')
+	const parsedModelRef = parseModelRef(body.model)
 
 	try {
-		const provider = getProvider(providerName)
+		const accessToken = requireHuggingFaceAccessToken(request)
+		const provider = getProvider(parsedModelRef.kind === 'space' ? 'space' : parsedModelRef.provider)
 		const params: GenerateParams = {
-			modelId: modelId ?? '',
+			provider: parsedModelRef.kind === 'space' ? 'space' : parsedModelRef.provider,
+			modelId: parsedModelRef.kind === 'hf' ? parsedModelRef.modelId : '',
 			prompt: body.prompt,
 			negativePrompt: body.negativePrompt,
 			steps: body.steps ?? 20,
@@ -35,9 +39,12 @@ export async function POST(request: Request) {
 			controlNetMode: body.controlNetMode,
 			controlNetStrength: body.controlNetStrength,
 			referenceImageUrl: body.referenceImageUrl,
+			spaceId: parsedModelRef.kind === 'space' ? parsedModelRef.spaceId : undefined,
+			spaceApiName: parsedModelRef.kind === 'space' ? parsedModelRef.apiName : undefined,
+			spaceArgsTemplate: parsedModelRef.kind === 'space' ? parsedModelRef.argsTemplate : undefined,
 		}
 
-		let result = await provider.generate(params)
+		let result = await provider.generate(params, { accessToken })
 
 		if (result.imageUrl.startsWith('data:')) {
 			const imageId = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
@@ -49,9 +56,10 @@ export async function POST(request: Request) {
 		return Response.json(result)
 	} catch (error) {
 		console.error('Generate error:', error)
+		const message = error instanceof Error ? error.message : 'Generation failed'
 		return Response.json(
-			{ error: error instanceof Error ? error.message : 'Generation failed' },
-			{ status: 500 }
+			{ error: message },
+			{ status: message.startsWith('No Hugging Face access token') ? 401 : 500 }
 		)
 	}
 }
@@ -72,4 +80,3 @@ function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; contentType: stri
 		contentType,
 	}
 }
-

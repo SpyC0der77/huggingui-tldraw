@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createShapeId, Editor, TLComponents, Tldraw, TldrawOptions } from 'tldraw'
+import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel.tsx'
 import { ImagePipelineSidebar } from './components/ImagePipelineSidebar.tsx'
 import { OnCanvasNodePicker } from './components/OnCanvasNodePicker.tsx'
 import { PipelineRegions } from './components/PipelineRegions.tsx'
@@ -22,6 +23,7 @@ const components: TLComponents = {
 		</>
 	),
 	Toolbar: PipelineToolbar,
+	StylePanel: null,
 }
 
 const options: Partial<TldrawOptions> = {
@@ -58,11 +60,12 @@ function App() {
 	return (
 		<div className="image-pipeline-layout" style={{ position: 'fixed', inset: 0 }}>
 			<div className="image-pipeline-sidebar">
+				<HuggingFaceAuthPanel />
 				{editor ? <ImagePipelineSidebar editor={editor} /> : <div />}
 			</div>
 			<div className="image-pipeline-canvas">
 				<Tldraw
-					persistenceKey="image-pipeline"
+					persistenceKey="huggingui-pipeline-v3"
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
@@ -120,7 +123,14 @@ function createDefaultPipeline(editor: Editor) {
 			x: 100,
 			y: 200,
 			props: {
-				node: { type: 'model', provider: 'flux', modelId: 'flux-dev' },
+				node: {
+					type: 'model',
+					provider: 'auto',
+					modelId: 'black-forest-labs/FLUX.1-schnell',
+					spaceId: '',
+					spaceApiName: '/predict',
+					spaceArgsTemplate: '["{prompt}"]',
+				},
 			},
 		},
 		{
@@ -143,6 +153,7 @@ function createDefaultPipeline(editor: Editor) {
 			props: {
 				node: {
 					type: 'generate',
+					promptText: 'a photo of a cat sitting on a windowsill',
 					steps: 20,
 					cfgScale: 7,
 					seed: Math.floor(Math.random() * 99999),

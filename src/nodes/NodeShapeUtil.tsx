@@ -229,7 +229,6 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 		<HTMLContainer
 			className={classNames('NodeShape', {
 				NodeShape_executing: isExecuting,
-				NodeShape_capture: shape.props.node.type === 'capture',
 			})}
 			onContextMenu={(e) => {
 				const target = e.target as HTMLElement

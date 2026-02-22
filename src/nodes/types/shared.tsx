@@ -16,7 +16,6 @@ import { NODE_WIDTH_PX, PORT_TYPE_COLORS, PortDataType } from '../../constants'
 import { Port, PortId, ShapePort } from '../../ports/Port'
 import { getNodeInputPortValues } from '../nodePorts'
 import { NodeShape } from '../NodeShapeUtil'
-import { NodeType } from '../nodeTypes'
 
 /**
  * Pipeline values can be strings (prompts, image URLs, model IDs), numbers (steps, cfg scale),
@@ -109,7 +108,7 @@ export interface NodeDefinitionConstructor<Node extends { type: string }> {
 /**
  * Update the `node` prop within a node shape.
  */
-export function updateNode<T extends NodeType>(
+export function updateNode<T extends { type: string }>(
 	editor: Editor,
 	shape: NodeShape,
 	update: (node: T) => T,
@@ -118,7 +117,7 @@ export function updateNode<T extends NodeType>(
 	editor.updateShape({
 		id: shape.id,
 		type: shape.type,
-		props: { node: update(shape.props.node as T), isOutOfDate },
+		props: { node: update(shape.props.node as unknown as T) as any, isOutOfDate },
 	})
 }
 
