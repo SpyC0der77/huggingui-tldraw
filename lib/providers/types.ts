@@ -1,4 +1,5 @@
 export interface GenerateParams {
+	provider: string
 	modelId: string
 	prompt: string
 	negativePrompt?: string
@@ -8,6 +9,9 @@ export interface GenerateParams {
 	controlNetMode?: string
 	controlNetStrength?: number
 	referenceImageUrl?: string
+	spaceId?: string
+	spaceApiName?: string
+	spaceArgsTemplate?: string
 }
 
 export interface GenerateResult {
@@ -25,9 +29,12 @@ export interface UpscaleResult {
 	imageUrl: string
 }
 
-export interface ImageProvider {
-	name: string
-	generate(params: GenerateParams): Promise<GenerateResult>
-	upscale?(params: UpscaleParams): Promise<UpscaleResult>
+export interface ProviderContext {
+	accessToken: string
 }
 
+export interface ImageProvider {
+	name: string
+	generate(params: GenerateParams, context: ProviderContext): Promise<GenerateResult>
+	upscale?(params: UpscaleParams, context: ProviderContext): Promise<UpscaleResult>
+}

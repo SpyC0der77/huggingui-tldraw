@@ -16,13 +16,12 @@ import { NODE_WIDTH_PX, PORT_TYPE_COLORS, PortDataType } from '../../constants'
 import { Port, PortId, ShapePort } from '../../ports/Port'
 import { getNodeInputPortValues } from '../nodePorts'
 import { NodeShape } from '../NodeShapeUtil'
-import { NodeType } from '../nodeTypes'
 
 /**
  * Pipeline values can be strings (prompts, image URLs, model IDs), numbers (steps, cfg scale),
  * or null (no value yet).
  */
-export type PipelineValue = string | number | null
+export type PipelineValue = string | number | boolean | null
 
 /**
  * A special value that can be returned from a node to indicate that execution should stop.
@@ -109,7 +108,7 @@ export interface NodeDefinitionConstructor<Node extends { type: string }> {
 /**
  * Update the `node` prop within a node shape.
  */
-export function updateNode<T extends NodeType>(
+export function updateNode<T extends { type: string }>(
 	editor: Editor,
 	shape: NodeShape,
 	update: (node: T) => T,
@@ -118,7 +117,7 @@ export function updateNode<T extends NodeType>(
 	editor.updateShape({
 		id: shape.id,
 		type: shape.type,
-		props: { node: update(shape.props.node as T), isOutOfDate },
+		props: { node: update(shape.props.node as unknown as T) as any, isOutOfDate },
 	})
 }
 
@@ -287,6 +286,9 @@ export function NodeValue({ value }: { value: PipelineValue | STOP_EXECUTION }) 
 	if (typeof value === 'number') {
 		return <>{formatNumber(value)}</>
 	}
+	if (typeof value === 'boolean') {
+		return <>{value ? 'true' : 'false'}</>
+	}
 
 	// For strings, truncate long values
 	const str = String(value)
@@ -355,15 +357,16 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
 /** Coerce any pipeline value to a string. */
 export function coerceToText(value: PipelineValue, fallback = ''): string {
 	if (value == null) return fallback
-	if (typeof value === 'number') return String(value)
-	return value
+	if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+	return String(value)
 }
 
 /** Coerce any pipeline value to a number. */
 export function coerceToNumber(value: PipelineValue, fallback = 0): number {
 	if (value == null) return fallback
 	if (typeof value === 'number') return value
-	const n = parseFloat(value)
+	if (typeof value === 'boolean') return value ? 1 : 0
+	const n = parseFloat(String(value))
 	return Number.isNaN(n) ? fallback : n
 }
 

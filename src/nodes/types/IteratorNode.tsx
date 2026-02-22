@@ -114,7 +114,10 @@ export class IteratorNodeDefinition extends NodeDefinition<IteratorNode> {
 		let lastResult: string | null = null
 		for (let i = 0; i < items.length; i++) {
 			const prompt = template ? `${template}, ${items[i]}` : items[i]
-			const result = await apiGenerate({ model: 'stable-diffusion:sdxl', prompt })
+			const result = await apiGenerate({
+				model: 'hf:auto:black-forest-labs/FLUX.1-schnell',
+				prompt,
+			})
 			lastResult = result.imageUrl
 			updateNode<IteratorNode>(this.editor, shape, (n) => ({
 				...n,

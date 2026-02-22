@@ -13,29 +13,31 @@ import {
 	updateNode,
 } from './shared'
 
-export type PromptNode = T.TypeOf<typeof PromptNode>
-export const PromptNode = T.object({
-	type: T.literal('prompt'),
+export type TextNode = T.TypeOf<typeof TextNode>
+export const TextNode = T.object({
+	type: T.literal('text'),
 	text: T.string,
 })
 
-export class PromptNodeDefinition extends NodeDefinition<PromptNode> {
-	static type = 'prompt'
-	static validator = PromptNode
-	title = 'Prompt (Legacy)'
-	heading = 'Prompt'
-	hidden = true as const
+export class TextNodeDefinition extends NodeDefinition<TextNode> {
+	static type = 'text'
+	static validator = TextNode
+	title = 'Text'
+	heading = 'Text'
 	icon = (<PromptIcon />)
 	category = 'input'
-	getDefault(): PromptNode {
+
+	getDefault(): TextNode {
 		return {
-			type: 'prompt',
+			type: 'text',
 			text: 'a photo of a cat sitting on a windowsill',
 		}
 	}
+
 	getBodyHeightPx() {
 		return NODE_ROW_HEIGHT_PX * 2
 	}
+
 	getPorts(): Record<string, ShapePort> {
 		return {
 			output: {
@@ -47,11 +49,13 @@ export class PromptNodeDefinition extends NodeDefinition<PromptNode> {
 			},
 		}
 	}
-	async execute(_shape: NodeShape, node: PromptNode): Promise<ExecutionResult> {
+
+	async execute(_shape: NodeShape, node: TextNode): Promise<ExecutionResult> {
 		await sleep(200)
 		return { output: node.text }
 	}
-	getOutputInfo(shape: NodeShape, node: PromptNode): InfoValues {
+
+	getOutputInfo(shape: NodeShape, node: TextNode): InfoValues {
 		return {
 			output: {
 				value: node.text,
@@ -60,19 +64,20 @@ export class PromptNodeDefinition extends NodeDefinition<PromptNode> {
 			},
 		}
 	}
-	Component = PromptNodeComponent
+
+	Component = TextNodeComponent
 }
 
-function PromptNodeComponent({ shape, node }: NodeComponentProps<PromptNode>) {
+function TextNodeComponent({ shape, node }: NodeComponentProps<TextNode>) {
 	const editor = useEditor()
 	return (
 		<NodeRow className="PromptNode-row">
 			<textarea
 				className="PromptNode-textarea"
 				value={node.text}
-				placeholder="Enter your prompt..."
+				placeholder="Enter text..."
 				onChange={(e) =>
-					updateNode<PromptNode>(
+					updateNode<TextNode>(
 						editor,
 						shape,
 						(n) => ({

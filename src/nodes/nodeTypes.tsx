@@ -7,23 +7,19 @@ import {
 } from '../constants'
 import { PortId, ShapePort } from '../ports/Port'
 import { NodeShape } from './NodeShapeUtil'
-import { AdjustNodeDefinition } from './types/AdjustNode'
-import { BlendNodeDefinition } from './types/BlendNode'
-import { CaptureNodeDefinition } from './types/CaptureNode'
-import { ControlNetNodeDefinition } from './types/ControlNetNode'
+import { BooleanNodeDefinition } from './types/BooleanNode'
+import { EnumNodeDefinition } from './types/EnumNode'
 import { GenerateNodeDefinition } from './types/GenerateNode'
-import { GenerateTextNodeDefinition } from './types/GenerateTextNode'
-import { IPAdapterNodeDefinition } from './types/IPAdapterNode'
 import { IteratorNodeDefinition } from './types/IteratorNode'
 import { LoadImageNodeDefinition } from './types/LoadImageNode'
 import { ModelNodeDefinition } from './types/ModelNode'
 import { NumberNodeDefinition } from './types/NumberNode'
 import { PreviewNodeDefinition } from './types/PreviewNode'
-import { PromptConcatNodeDefinition } from './types/PromptConcatNode'
 import { PromptNodeDefinition } from './types/PromptNode'
 import { RouterNodeDefinition } from './types/RouterNode'
-import { StyleTransferNodeDefinition } from './types/StyleTransferNode'
-import { UpscaleNodeDefinition } from './types/UpscaleNode'
+import { RunSpaceNodeDefinition } from './types/RunSpaceNode'
+import { SpaceNodeDefinition } from './types/SpaceNode'
+import { TextNodeDefinition } from './types/TextNode'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -34,22 +30,18 @@ import {
 /** All our node types */
 export const NodeDefinitions = {
 	model: ModelNodeDefinition,
+	text: TextNodeDefinition,
 	prompt: PromptNodeDefinition,
+	enum: EnumNodeDefinition,
+	boolean: BooleanNodeDefinition,
+	space: SpaceNodeDefinition,
 	generate: GenerateNodeDefinition,
-	generate_text: GenerateTextNodeDefinition,
-	controlnet: ControlNetNodeDefinition,
+	run_space: RunSpaceNodeDefinition,
 	load_image: LoadImageNodeDefinition,
 	preview: PreviewNodeDefinition,
-	blend: BlendNodeDefinition,
-	adjust: AdjustNodeDefinition,
-	upscale: UpscaleNodeDefinition,
-	ip_adapter: IPAdapterNodeDefinition,
-	style_transfer: StyleTransferNodeDefinition,
-	prompt_concat: PromptConcatNodeDefinition,
 	number: NumberNodeDefinition,
 	router: RouterNodeDefinition,
 	iterator: IteratorNodeDefinition,
-	capture: CaptureNodeDefinition,
 } satisfies Record<string, NodeDefinitionConstructor<any>>
 
 /**
@@ -109,7 +101,10 @@ export function getNodeTypePorts(editor: Editor, shape: NodeShape): Record<strin
 export async function executeNode(
 	editor: Editor,
 	shape: NodeShape,
-	inputs: Record<string, string | number | null | (string | number | null)[]>
+	inputs: Record<
+		string,
+		string | number | boolean | null | (string | number | boolean | null)[]
+	>
 ): Promise<ExecutionResult> {
 	return await getNodeDefinition(editor, shape.props.node).execute(shape, shape.props.node, inputs)
 }

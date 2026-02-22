@@ -100,8 +100,9 @@ const nodeInputPortValuesCache = createComputedCache(
 			const output = connectedShapeOutputs[connection.connectedPortId]
 			if (!output) continue
 			const port = ports[connection.ownPortId]
+			if (!port) continue
 
-			if (port?.multi) {
+			if (port.multi) {
 				// Output ports are always single-valued; extract the scalar value.
 				const singleValue = isMultiInfoValue(output) ? output.value[0] : output.value
 				const existing = values[connection.ownPortId]
