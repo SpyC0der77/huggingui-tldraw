@@ -112,10 +112,7 @@ function App() {
 
 						setEditor(editor)
 
-						// Create a default pipeline if the canvas is empty
-						if (!editor.getCurrentPageShapes().some((s) => s.type === 'node')) {
-							createDefaultPipeline(editor)
-						}
+						ensureDefaultPipeline(editor)
 
 						// Ensure drag gestures manipulate nodes by default instead of panning.
 						editor.setCurrentTool('select')
@@ -141,6 +138,22 @@ function App() {
 			</div>
 		</div>
 	)
+}
+
+function ensureDefaultPipeline(editor: Editor) {
+	const hasNodeShapes = () => editor.getCurrentPageShapes().some((shape) => shape.type === 'node')
+
+	if (!hasNodeShapes()) {
+		createDefaultPipeline(editor)
+	}
+
+	// tldraw can hydrate persisted snapshots shortly after mount in production builds.
+	// Re-check after hydration and seed a default pipeline if the loaded snapshot is empty.
+	window.setTimeout(() => {
+		if (!hasNodeShapes()) {
+			createDefaultPipeline(editor)
+		}
+	}, 4000)
 }
 
 function loadExample(editor: Editor, example: 'image-generator' | 'image-space') {
