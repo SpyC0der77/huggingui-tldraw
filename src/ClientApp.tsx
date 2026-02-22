@@ -1,5 +1,5 @@
 'use client'
 
-import App from './App.tsx'
+import App from './App'
 
 export default App

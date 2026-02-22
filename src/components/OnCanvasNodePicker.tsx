@@ -32,6 +32,11 @@ export const onCanvasNodePickerState = new EditorAtom<OnCanvasNodePickerState | 
 	() => null
 )
 
+type PickerNodeDefinition = Pick<
+	NodeDefinition<{ type: string }>,
+	'type' | 'title' | 'icon' | 'getDefault'
+>
+
 export function OnCanvasNodePicker() {
 	const editor = useEditor()
 	const onClose = useCallback(() => {
@@ -135,11 +140,11 @@ function OnCanvasNodePickerDialog({
 	)
 }
 
-function OnCanvasNodePickerItem<T extends NodeType>({
+function OnCanvasNodePickerItem({
 	definition,
 	onClose,
 }: {
-	definition: NodeDefinition<T>
+	definition: PickerNodeDefinition
 	onClose: () => void
 }) {
 	const editor = useEditor()
@@ -170,7 +175,7 @@ function OnCanvasNodePickerItem<T extends NodeType>({
 					.getShapePageTransform(connection)
 					.applyToPoint(terminalInConnectionSpace)
 
-				state.onPick(definition.getDefault(), terminalInPageSpace)
+				state.onPick(definition.getDefault() as NodeType, terminalInPageSpace)
 
 				onClose()
 			}}

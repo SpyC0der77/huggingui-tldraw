@@ -1,5 +1,5 @@
 import { createShapeId, StateNode, TLPointerEventInfo, TLShapeId } from 'tldraw'
-import { onCanvasNodePickerState } from '../components/OnCanvasNodePicker.tsx'
+import { onCanvasNodePickerState } from '../components/OnCanvasNodePicker'
 import {
 	createOrUpdateConnectionBinding,
 	getConnectionBindings,
@@ -11,7 +11,7 @@ import {
 	NODE_ROW_HEADER_GAP_PX,
 	NODE_ROW_HEIGHT_PX,
 	PortDataType,
-} from '../constants.tsx'
+} from '../constants'
 import { getNodePortConnections, getNodePorts } from '../nodes/nodePorts'
 import { PortId } from '../ports/Port'
 import { findFirstCompatiblePort } from './portCompatibility'

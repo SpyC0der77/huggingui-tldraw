@@ -24,7 +24,6 @@ import {
 	ExecutionResult,
 	InfoValues,
 	NodeDefinition,
-	NodeDefinitionConstructor,
 } from './types/shared'
 
 /** All our node types */
@@ -42,7 +41,7 @@ export const NodeDefinitions = {
 	number: NumberNodeDefinition,
 	router: RouterNodeDefinition,
 	iterator: IteratorNodeDefinition,
-} satisfies Record<string, NodeDefinitionConstructor<{ type: string }>>
+} as const
 
 /**
  * A union type of all our node types.

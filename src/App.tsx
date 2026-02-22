@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { createShapeId, Editor, TLComponents, Tldraw, TldrawOptions } from 'tldraw'
-import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel.tsx'
-import { ImagePipelineSidebar } from './components/ImagePipelineSidebar.tsx'
-import { OnCanvasNodePicker } from './components/OnCanvasNodePicker.tsx'
-import { PipelineRegions } from './components/PipelineRegions.tsx'
-import { overrides, PipelineToolbar } from './components/PipelineToolbar.tsx'
+import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel'
+import { ImagePipelineSidebar } from './components/ImagePipelineSidebar'
+import { OnCanvasNodePicker } from './components/OnCanvasNodePicker'
+import { PipelineRegions } from './components/PipelineRegions'
+import { overrides, PipelineToolbar } from './components/PipelineToolbar'
 import {
 	ConnectionBindingUtil,
 	createOrUpdateConnectionBinding,
 } from './connection/ConnectionBindingUtil'
 import { ConnectionShapeUtil } from './connection/ConnectionShapeUtil'
 import { keepConnectionsAtBottom } from './connection/keepConnectionsAtBottom'
-import { disableTransparency } from './disableTransparency.tsx'
+import { disableTransparency } from './disableTransparency'
 import { NodeShapeUtil } from './nodes/NodeShapeUtil'
 import { PointingPort } from './ports/PointingPort'
 

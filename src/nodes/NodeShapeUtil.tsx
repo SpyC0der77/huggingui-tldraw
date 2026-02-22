@@ -1,12 +1,12 @@
 import classNames from 'classnames'
 import { useCallback } from 'react'
 import {
+	Box,
 	Circle2d,
 	Group2d,
 	HTMLContainer,
 	RecordProps,
 	Rectangle2d,
-	resizeBox,
 	ShapeUtil,
 	T,
 	TldrawUiButton,
@@ -16,8 +16,11 @@ import {
 	TldrawUiDropdownMenuItem,
 	TldrawUiDropdownMenuRoot,
 	TldrawUiDropdownMenuTrigger,
+	TLResizeHandle,
 	TLResizeInfo,
+	TLResizeMode,
 	TLShape,
+	VecModel,
 	useEditor,
 	useUniqueSafeId,
 	useValue,
@@ -48,6 +51,7 @@ declare module 'tldraw' {
 }
 
 export type NodeShape = TLShape<typeof NODE_TYPE>
+type NodeResizeResult = ReturnType<NonNullable<ShapeUtil<NodeShape>['onResize']>>
 
 export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 	static override type = NODE_TYPE
@@ -117,10 +121,13 @@ export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 		})
 	}
 
-	override onResize(shape: NodeShape, info: TLResizeInfo<NodeShape>) {
+	override onResize(
+		shape: NodeShape,
+		info: TLResizeInfo<NodeShape>
+	): NodeResizeResult {
 		const definition = getNodeDefinition(this.editor, shape.props.node)
 		if (definition.canResizeNode) {
-			const node = shape.props.node as { w: number; h: number; type: string }
+			const node = shape.props.node as Record<string, unknown>
 			const prevW = getNodeWidthPx(this.editor, shape)
 			const prevH = getNodeHeightPx(this.editor, shape)
 			const newW = Math.max(200, Math.round(prevW * info.scaleX))
@@ -132,24 +139,37 @@ export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 				NODE_ROW_BOTTOM_PADDING_PX -
 				NODE_FOOTER_HEIGHT_PX
 
+			const resized = resizeNode(
+				shape as unknown as NodeShape & { props: { node: { w: number; h: number } } },
+				info as unknown as {
+					newPoint: VecModel
+					handle: TLResizeHandle
+					mode: TLResizeMode
+					scaleX: number
+					scaleY: number
+					initialBounds: Box
+					initialShape: NodeShape & { props: { node: { w: number; h: number } } }
+				}
+			) as unknown as NodeResizeResult
+
 			return {
-				...resizeNode(shape, info),
+				...resized,
 				props: {
 					...shape.props,
 					node: {
-						...node,
-						w: newW,
-						h:
-							NODE_HEADER_HEIGHT_PX +
-							NODE_ROW_HEADER_GAP_PX +
-							Math.max(0, bodyH) +
-							NODE_ROW_BOTTOM_PADDING_PX +
-							NODE_FOOTER_HEIGHT_PX,
+							...node,
+							w: newW,
+							h:
+								NODE_HEADER_HEIGHT_PX +
+								NODE_ROW_HEADER_GAP_PX +
+								Math.max(0, bodyH) +
+								NODE_ROW_BOTTOM_PADDING_PX +
+								NODE_FOOTER_HEIGHT_PX,
+						} as unknown as NodeShape['props']['node'],
 					},
-				},
+				} as unknown as NodeResizeResult
 			}
-		}
-		return resizeBox(shape, info)
+			return undefined
 	}
 
 	component(shape: NodeShape) {
@@ -346,7 +366,10 @@ function NodeFooterMenu({ shape }: { shape: NodeShape }) {
 			id: shape.id,
 			type: shape.type,
 			props: {
-				node: { ...(shape.props.node as Record<string, unknown>), ...updates },
+				node: {
+					...(shape.props.node as Record<string, unknown>),
+					...updates,
+				} as unknown as NodeShape['props']['node'],
 				isOutOfDate: true,
 			},
 		})
