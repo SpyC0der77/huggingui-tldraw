@@ -40,6 +40,8 @@ const options: Partial<TldrawOptions> = {
 	maxPages: 1,
 }
 
+const PERSISTENCE_KEY = 'huggingui-pipeline-v4'
+
 function restrictToNodesAndConnections(editor: Editor) {
 	const allowedShapeTypes = new Set(['node', 'connection'])
 
@@ -101,7 +103,7 @@ function App() {
 					</div>
 				) : null}
 				<Tldraw
-					persistenceKey="huggingui-pipeline-v3"
+					persistenceKey={PERSISTENCE_KEY}
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
@@ -112,10 +114,17 @@ function App() {
 
 						setEditor(editor)
 
-						// Create a default pipeline if the canvas is empty
+						// Create a default pipeline if the canvas is empty.
+						// This also guards against stale persisted data that gets loaded
+						// asynchronously after mount and contains no supported node shapes.
 						if (!editor.getCurrentPageShapes().some((s) => s.type === 'node')) {
 							createDefaultPipeline(editor)
 						}
+						setTimeout(() => {
+							if (!editor.getCurrentPageShapes().some((s) => s.type === 'node')) {
+								createDefaultPipeline(editor)
+							}
+						}, 5000)
 
 						// Ensure drag gestures manipulate nodes by default instead of panning.
 						editor.setCurrentTool('select')
