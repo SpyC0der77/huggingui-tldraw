@@ -40,6 +40,17 @@ const options: Partial<TldrawOptions> = {
 	maxPages: 1,
 }
 
+function getPersistenceKey() {
+	if (typeof window === 'undefined') return undefined
+
+	// tldraw's local persistence uses IndexedDB. In deployed embeds (e.g. third-party iframes),
+	// browsers may block storage access and tldraw transitions from loading -> error after a delay,
+	// which makes the canvas content disappear shortly after mount.
+	if (window.top !== window.self) return undefined
+
+	return 'huggingui-pipeline-v3'
+}
+
 function restrictToNodesAndConnections(editor: Editor) {
 	const allowedShapeTypes = new Set(['node', 'connection'])
 
@@ -68,6 +79,7 @@ function App() {
 	const [selectedExample, setSelectedExample] = useState<'image-generator' | 'image-space'>(
 		'image-generator'
 	)
+	const persistenceKey = getPersistenceKey()
 
 	return (
 		<div className="image-pipeline-layout" style={{ position: 'fixed', inset: 0 }}>
@@ -101,7 +113,7 @@ function App() {
 					</div>
 				) : null}
 				<Tldraw
-					persistenceKey="huggingui-pipeline-v3"
+					persistenceKey={persistenceKey}
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
