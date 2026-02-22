@@ -42,8 +42,8 @@ export const GenerateNode = T.object({
 export class GenerateNodeDefinition extends NodeDefinition<GenerateNode> {
 	static type = 'generate'
 	static validator = GenerateNode
-	title = 'Generate'
-	heading = 'Generate'
+	title = 'Generate image'
+	heading = 'Generate image'
 	icon = (<GenerateIcon />)
 	category = 'process'
 	resultKeys = ['lastResultUrl'] as const

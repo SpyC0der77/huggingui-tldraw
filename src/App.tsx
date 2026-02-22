@@ -5,7 +5,10 @@ import { ImagePipelineSidebar } from './components/ImagePipelineSidebar.tsx'
 import { OnCanvasNodePicker } from './components/OnCanvasNodePicker.tsx'
 import { PipelineRegions } from './components/PipelineRegions.tsx'
 import { overrides, PipelineToolbar } from './components/PipelineToolbar.tsx'
-import { ConnectionBindingUtil } from './connection/ConnectionBindingUtil'
+import {
+	ConnectionBindingUtil,
+	createOrUpdateConnectionBinding,
+} from './connection/ConnectionBindingUtil'
 import { ConnectionShapeUtil } from './connection/ConnectionShapeUtil'
 import { keepConnectionsAtBottom } from './connection/keepConnectionsAtBottom'
 import { disableTransparency } from './disableTransparency.tsx'
@@ -56,6 +59,9 @@ function restrictToNodesAndConnections(editor: Editor) {
 
 function App() {
 	const [editor, setEditor] = useState<Editor | null>(null)
+	const [selectedExample, setSelectedExample] = useState<'image-generator' | 'image-space'>(
+		'image-generator'
+	)
 
 	return (
 		<div className="image-pipeline-layout" style={{ position: 'fixed', inset: 0 }}>
@@ -64,6 +70,30 @@ function App() {
 				{editor ? <ImagePipelineSidebar editor={editor} /> : <div />}
 			</div>
 			<div className="image-pipeline-canvas">
+				{editor ? (
+					<div className="ExampleSelector">
+						<span className="ExampleSelector-label">Examples</span>
+						<div className="ExampleSelector-controls">
+							<select
+								value={selectedExample}
+								onChange={(e) =>
+									setSelectedExample(e.target.value as 'image-generator' | 'image-space')
+								}
+							>
+								<option value="image-generator">Image generator</option>
+								<option value="image-space">Image Space</option>
+							</select>
+							<button
+								type="button"
+								onClick={() => {
+									loadExample(editor, selectedExample)
+								}}
+							>
+								Load
+							</button>
+						</div>
+					</div>
+				) : null}
 				<Tldraw
 					persistenceKey="huggingui-pipeline-v3"
 					options={options}
@@ -105,6 +135,233 @@ function App() {
 			</div>
 		</div>
 	)
+}
+
+function loadExample(editor: Editor, example: 'image-generator' | 'image-space') {
+	editor.run(() => {
+		const allShapeIds = editor.getCurrentPageShapes().map((shape) => shape.id)
+		if (allShapeIds.length > 0) {
+			editor.deleteShapes(allShapeIds)
+		}
+
+		if (example === 'image-space') {
+			createImageSpaceExample(editor)
+			return
+		}
+
+		createImageGeneratorExample(editor)
+	})
+}
+
+function createConnection(
+	editor: Editor,
+	fromShapeId: ReturnType<typeof createShapeId>,
+	fromPortId: string,
+	toShapeId: ReturnType<typeof createShapeId>,
+	toPortId: string
+) {
+	const connectionId = createShapeId()
+	editor.createShape({
+		id: connectionId,
+		type: 'connection',
+		props: {
+			start: { x: 0, y: 0 },
+			end: { x: 120, y: 0 },
+		},
+	})
+	createOrUpdateConnectionBinding(editor, connectionId, fromShapeId, {
+		terminal: 'start',
+		portId: fromPortId,
+	})
+	createOrUpdateConnectionBinding(editor, connectionId, toShapeId, {
+		terminal: 'end',
+		portId: toPortId,
+	})
+}
+
+function createImageGeneratorExample(editor: Editor) {
+	const modelId = createShapeId()
+	const textId = createShapeId()
+	const generateId = createShapeId()
+	const previewId = createShapeId()
+
+	editor.createShapes([
+		{
+			id: modelId,
+			type: 'node',
+			x: 120,
+			y: 140,
+			props: {
+				node: {
+					type: 'model',
+					provider: 'auto',
+					modelId: 'black-forest-labs/FLUX.1-schnell',
+					spaceId: '',
+					spaceApiName: '',
+					spaceArgsTemplate: '',
+				},
+			},
+		},
+		{
+			id: textId,
+			type: 'node',
+			x: 120,
+			y: 400,
+			props: {
+				node: {
+					type: 'text',
+					text: 'a cinematic portrait photo of a fox in soft studio lighting',
+				},
+			},
+		},
+		{
+			id: generateId,
+			type: 'node',
+			x: 460,
+			y: 180,
+			props: {
+				node: {
+					type: 'generate',
+					promptText: 'a cinematic portrait photo of a fox in soft studio lighting',
+					steps: 20,
+					cfgScale: 7,
+					seed: 42,
+					lastResultUrl: null,
+				},
+			},
+		},
+		{
+			id: previewId,
+			type: 'node',
+			x: 840,
+			y: 180,
+			props: {
+				node: {
+					type: 'preview',
+					lastImageUrl: null,
+				},
+			},
+		},
+	])
+
+	createConnection(editor, modelId, 'output', generateId, 'model')
+	createConnection(editor, textId, 'output', generateId, 'prompt')
+	createConnection(editor, generateId, 'output', previewId, 'image')
+}
+
+function createImageSpaceExample(editor: Editor) {
+	const spaceId = createShapeId()
+	const textId = createShapeId()
+	const runSpaceId = createShapeId()
+	const previewId = createShapeId()
+
+	const schemaJson = JSON.stringify({
+		endpoints: [
+			{
+				apiName: '/infer',
+				parameters: [
+					{
+						label: 'Prompt',
+						parameter_name: 'prompt',
+						parameter_has_default: false,
+						parameter_default: null,
+						type: { type: 'string' },
+						component: 'Textbox',
+					},
+					{
+						label: 'Model Size',
+						parameter_name: 'model_size',
+						parameter_has_default: true,
+						parameter_default: '1.6B',
+						type: { enum: ['0.6B', '1.6B'], type: 'string' },
+						component: 'Radio',
+					},
+				],
+				returns: [
+					{
+						label: 'Result',
+						component: 'Image',
+						type: {
+							title: 'ImageData',
+							type: 'object',
+							properties: { path: { type: 'string' }, url: { type: 'string' } },
+						},
+					},
+				],
+				show_api: true,
+			},
+		],
+	})
+
+	const argsJson = JSON.stringify({
+		prompt: 'A photoreal mountain landscape at sunrise, 35mm photo',
+		model_size: '1.6B',
+		seed: 0,
+		randomize_seed: true,
+		width: 1024,
+		height: 1024,
+		guidance_scale: 4.5,
+		num_inference_steps: 2,
+	})
+
+	editor.createShapes([
+		{
+			id: spaceId,
+			type: 'node',
+			x: 120,
+			y: 220,
+			props: {
+				node: {
+					type: 'space',
+					spaceId: 'Efficient-Large-Model/SanaSprint',
+				},
+			},
+		},
+		{
+			id: textId,
+			type: 'node',
+			x: 120,
+			y: 470,
+			props: {
+				node: {
+					type: 'text',
+					text: 'A photoreal mountain landscape at sunrise, 35mm photo',
+				},
+			},
+		},
+		{
+			id: runSpaceId,
+			type: 'node',
+			x: 460,
+			y: 160,
+			props: {
+				node: {
+					type: 'run_space',
+					endpoint: '/infer',
+					argsJson,
+					schemaJson,
+					lastResultUrl: null,
+					lastResultText: null,
+				},
+			},
+		},
+		{
+			id: previewId,
+			type: 'node',
+			x: 860,
+			y: 200,
+			props: {
+				node: {
+					type: 'preview',
+					lastImageUrl: null,
+				},
+			},
+		},
+	])
+
+	createConnection(editor, spaceId, 'output', runSpaceId, 'space')
+	createConnection(editor, textId, 'output', runSpaceId, 'param:prompt')
+	createConnection(editor, runSpaceId, 'output', previewId, 'image')
 }
 
 /**
