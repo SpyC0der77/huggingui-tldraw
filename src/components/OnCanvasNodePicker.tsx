@@ -1,5 +1,5 @@
 import { Dialog, VisuallyHidden } from 'radix-ui'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import {
 	TldrawUiButton,
 	TldrawUiButtonIcon,
@@ -75,8 +75,8 @@ function OnCanvasNodePickerDialog({
 		editor,
 	])
 	const shouldRender = !!location
-	const [container, setContainer] = useState<HTMLDivElement | null>(null)
-	usePassThroughWheelEvents(useMemo(() => ({ current: container }), [container]))
+	const containerRef = useRef<HTMLDivElement | null>(null)
+	usePassThroughWheelEvents(containerRef)
 
 	useQuickReactor(
 		'OnCanvasNodePicker',
@@ -84,6 +84,7 @@ function OnCanvasNodePickerDialog({
 			const state = onCanvasNodePickerState.get(editor)
 			if (!state) return
 
+			const container = containerRef.current
 			if (!container) return
 
 			const connection = editor.getShape(state.connectionShapeId)
@@ -105,7 +106,7 @@ function OnCanvasNodePickerDialog({
 			const terminalInViewportSpace = editor.pageToViewport(terminalInPageSpace)
 			container.style.transform = `translate(${terminalInViewportSpace.x}px, ${terminalInViewportSpace.y}px) scale(${editor.getZoomLevel()}) `
 		},
-		[editor, container]
+		[editor]
 	)
 
 	return (
@@ -117,7 +118,7 @@ function OnCanvasNodePickerDialog({
 			}}
 		>
 			<Dialog.Content
-				ref={setContainer}
+				ref={containerRef}
 				className={`OnCanvasNodePicker OnCanvasNodePicker_${location}`}
 				style={{ width: NODE_WIDTH_PX }}
 			>

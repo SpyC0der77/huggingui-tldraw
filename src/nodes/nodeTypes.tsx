@@ -42,7 +42,7 @@ export const NodeDefinitions = {
 	number: NumberNodeDefinition,
 	router: RouterNodeDefinition,
 	iterator: IteratorNodeDefinition,
-} satisfies Record<string, NodeDefinitionConstructor<any>>
+} satisfies Record<string, NodeDefinitionConstructor<{ type: string }>>
 
 /**
  * A union type of all our node types.
@@ -55,15 +55,21 @@ export const NodeType = T.union(
 	}
 )
 
+type NodeDefinitionsByType = {
+	[K in keyof typeof NodeDefinitions as (typeof NodeDefinitions)[K]['type']]: InstanceType<
+		(typeof NodeDefinitions)[K]
+	>
+}
+
 const nodeDefinitions = new WeakCache<
 	Editor,
-	{ [K in keyof typeof NodeDefinitions]: InstanceType<(typeof NodeDefinitions)[K]> }
+	NodeDefinitionsByType
 >()
 export function getNodeDefinitions(editor: Editor) {
 	return nodeDefinitions.get(editor, () => {
 		return Object.fromEntries(
 			Object.values(NodeDefinitions).map((value) => [value.type, new value(editor)])
-		) as any
+		) as unknown as NodeDefinitionsByType
 	})
 }
 

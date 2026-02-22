@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
 	TldrawUiButton,
 	TldrawUiButtonIcon,
@@ -24,10 +24,6 @@ export function TemplatePicker() {
 	const refresh = useCallback(() => {
 		setTemplates(loadTemplates())
 	}, [])
-
-	useEffect(() => {
-		if (isOpen) refresh()
-	}, [isOpen, refresh])
 
 	const onSave = useCallback(() => {
 		if (!saveName.trim()) return
@@ -56,7 +52,14 @@ export function TemplatePicker() {
 	)
 
 	return (
-		<TldrawUiPopover id="template-picker" open={isOpen} onOpenChange={setIsOpen}>
+		<TldrawUiPopover
+			id="template-picker"
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (open) refresh()
+				setIsOpen(open)
+			}}
+		>
 			<TldrawUiPopoverTrigger>
 				<TldrawUiButton type="icon" title="Templates">
 					<TldrawUiButtonIcon icon={<TemplateIcon />} />

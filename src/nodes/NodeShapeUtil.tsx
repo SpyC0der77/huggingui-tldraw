@@ -117,7 +117,7 @@ export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 		})
 	}
 
-	override onResize(shape: any, info: TLResizeInfo<any>) {
+	override onResize(shape: NodeShape, info: TLResizeInfo<NodeShape>) {
 		const definition = getNodeDefinition(this.editor, shape.props.node)
 		if (definition.canResizeNode) {
 			const node = shape.props.node as { w: number; h: number; type: string }
@@ -346,7 +346,7 @@ function NodeFooterMenu({ shape }: { shape: NodeShape }) {
 			id: shape.id,
 			type: shape.type,
 			props: {
-				node: { ...(shape.props.node as any), ...updates },
+				node: { ...(shape.props.node as Record<string, unknown>), ...updates },
 				isOutOfDate: true,
 			},
 		})

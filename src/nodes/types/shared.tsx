@@ -117,7 +117,10 @@ export function updateNode<T extends { type: string }>(
 	editor.updateShape({
 		id: shape.id,
 		type: shape.type,
-		props: { node: update(shape.props.node as unknown as T) as any, isOutOfDate },
+		props: {
+			node: update(shape.props.node as unknown as T) as unknown as NodeShape['props']['node'],
+			isOutOfDate,
+		},
 	})
 }
 

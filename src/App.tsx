@@ -15,6 +15,12 @@ import { disableTransparency } from './disableTransparency.tsx'
 import { NodeShapeUtil } from './nodes/NodeShapeUtil'
 import { PointingPort } from './ports/PointingPort'
 
+declare global {
+	interface Window {
+		editor?: Editor
+	}
+}
+
 const shapeUtils = [NodeShapeUtil, ConnectionShapeUtil]
 const bindingUtils = [ConnectionBindingUtil]
 
@@ -102,7 +108,7 @@ function App() {
 					bindingUtils={bindingUtils}
 					components={components}
 					onMount={(editor) => {
-						;(window as any).editor = editor
+						window.editor = editor
 
 						setEditor(editor)
 
