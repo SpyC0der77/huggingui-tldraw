@@ -40,6 +40,11 @@ const options: Partial<TldrawOptions> = {
 	maxPages: 1,
 }
 
+// NOTE: This key is intentionally versioned. A previous persisted snapshot format could
+// hydrate and then be replaced with an empty store in production, which looked like the
+// canvas "disappearing" a few seconds after load.
+const PERSISTENCE_KEY = 'huggingui-pipeline-v4'
+
 function restrictToNodesAndConnections(editor: Editor) {
 	const allowedShapeTypes = new Set(['node', 'connection'])
 
@@ -101,7 +106,7 @@ function App() {
 					</div>
 				) : null}
 				<Tldraw
-					persistenceKey="huggingui-pipeline-v3"
+					persistenceKey={PERSISTENCE_KEY}
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
