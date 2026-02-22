@@ -33,8 +33,8 @@ export const PreviewNode = T.object({
 export class PreviewNodeDefinition extends NodeDefinition<PreviewNode> {
 	static type = 'preview'
 	static validator = PreviewNode
-	title = 'Preview'
-	heading = 'Preview'
+	title = 'Image preview'
+	heading = 'Image preview'
 	icon = (<PreviewIcon />)
 	category = 'output'
 	resultKeys = ['lastImageUrl'] as const
@@ -66,7 +66,7 @@ export class PreviewNodeDefinition extends NodeDefinition<PreviewNode> {
 		inputs: InputValues
 	): Promise<ExecutionResult> {
 		await sleep(200)
-		const imageUrl = inputs.image as string | null
+		const imageUrl = coerceInputToImageUrl(inputs.image)
 		updateNode<PreviewNode>(this.editor, shape, (n) => ({
 			...n,
 			lastImageUrl: imageUrl ?? null,
@@ -88,7 +88,7 @@ function PreviewNodeComponent({ shape, node }: NodeComponentProps<PreviewNode>) 
 
 	const displayUrl =
 		imageInput && !imageInput.isOutOfDate && imageInput.value !== STOP_EXECUTION
-			? (imageInput.value as string)
+			? coerceInputToImageUrl(imageInput.value)
 			: node.lastImageUrl
 
 	return (
@@ -117,4 +117,37 @@ function PreviewNodeComponent({ shape, node }: NodeComponentProps<PreviewNode>) 
 			</div>
 		</>
 	)
+}
+
+function coerceInputToImageUrl(value: unknown): string | null {
+	if (typeof value === 'string') {
+		const trimmed = value.trim()
+		if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null
+		return trimmed
+	}
+
+	if (!value || typeof value !== 'object') {
+		return null
+	}
+
+	if (Array.isArray(value)) {
+		for (const entry of value) {
+			const resolved = coerceInputToImageUrl(entry)
+			if (resolved) return resolved
+		}
+		return null
+	}
+
+	const obj = value as Record<string, unknown>
+	for (const key of ['imageUrl', 'url', 'path', 'src']) {
+		const candidate = coerceInputToImageUrl(obj[key])
+		if (candidate) return candidate
+	}
+
+	for (const nested of Object.values(obj)) {
+		const candidate = coerceInputToImageUrl(nested)
+		if (candidate) return candidate
+	}
+
+	return null
 }

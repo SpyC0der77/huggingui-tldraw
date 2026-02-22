@@ -154,10 +154,7 @@ export class RunSpaceNodeDefinition extends NodeDefinition<RunSpaceNode> {
 			hasImageUrl: Boolean(result.imageUrl),
 		})
 
-		const text =
-			typeof result.output === 'string'
-				? result.output
-				: JSON.stringify(result.output, null, 2).slice(0, 2400)
+		const text = formatOutputText(result.output)
 
 		updateNode<RunSpaceNode>(this.editor, shape, (n) => ({
 			...n,
@@ -165,16 +162,17 @@ export class RunSpaceNodeDefinition extends NodeDefinition<RunSpaceNode> {
 			lastResultText: result.imageUrl ? null : text,
 		}))
 
-		return { output: result.imageUrl ?? text }
+		return { output: result.imageUrl ?? text ?? null }
 	}
 
 	getOutputInfo(shape: NodeShape, node: RunSpaceNode, inputs: InfoValues): InfoValues {
 		const schema = parseSchema(node.schemaJson)
 		const endpoint = schema?.endpoints.find((item) => item.apiName === node.endpoint) ?? null
 		const inferredDataType = getEndpointOutputPortDataType(endpoint)
+		const outputValue = node.lastResultUrl ?? node.lastResultText ?? null
 		return {
 			output: {
-				value: node.lastResultUrl ?? node.lastResultText,
+				value: outputValue,
 				isOutOfDate: areAnyInputsOutOfDate(inputs) || shape.props.isOutOfDate,
 				dataType: node.lastResultUrl ? 'image' : inferredDataType,
 			},
@@ -570,6 +568,17 @@ function resolveParameterInputValue(
 	const connected = inputs[getParameterPortId(parameter.parameter_name)]
 	if (connected === undefined) return fallbackValue
 	return Array.isArray(connected) ? connected[0] : connected
+}
+
+function formatOutputText(output: unknown): string | null {
+	if (output == null) return null
+	if (typeof output === 'string') return output
+	try {
+		const json = JSON.stringify(output, null, 2)
+		return json ? json.slice(0, 2400) : null
+	} catch {
+		return String(output)
+	}
 }
 
 function stripSpaceInfo(info: SpaceInfoResult): EndpointSchema {
