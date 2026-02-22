@@ -40,6 +40,12 @@ const options: Partial<TldrawOptions> = {
 	maxPages: 1,
 }
 
+// NOTE: tldraw restores snapshots asynchronously. In production we observed
+// older persisted snapshots (from prior schema iterations) hydrating a few
+// seconds after mount and leaving the page empty once our shape restrictions
+// run. Bumping the persistence key isolates those incompatible snapshots.
+const PERSISTENCE_KEY = 'huggingui-pipeline-v4'
+
 function restrictToNodesAndConnections(editor: Editor) {
 	const allowedShapeTypes = new Set(['node', 'connection'])
 
@@ -101,7 +107,7 @@ function App() {
 					</div>
 				) : null}
 				<Tldraw
-					persistenceKey="huggingui-pipeline-v3"
+					persistenceKey={PERSISTENCE_KEY}
 					options={options}
 					overrides={overrides}
 					shapeUtils={shapeUtils}
