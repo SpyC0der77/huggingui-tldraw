@@ -112,10 +112,18 @@ function App() {
 
 						setEditor(editor)
 
-						// Create a default pipeline if the canvas is empty
-						if (!editor.getCurrentPageShapes().some((s) => s.type === 'node')) {
-							createDefaultPipeline(editor)
-						}
+						// Wait for persisted content to hydrate before seeding a fallback default pipeline.
+						// In production deployments, persistence hydration can lag behind initial mount and
+						// overwrite eagerly-created shapes a few seconds later.
+						const fallbackSeedTimer = window.setTimeout(() => {
+							if (!editor.getCurrentPageShapes().some((s) => s.type === 'node')) {
+								createDefaultPipeline(editor)
+							}
+						}, 4000)
+
+						editor.disposables.add(() => {
+							window.clearTimeout(fallbackSeedTimer)
+						})
 
 						// Ensure drag gestures manipulate nodes by default instead of panning.
 						editor.setCurrentTool('select')
