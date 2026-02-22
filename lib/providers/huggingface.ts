@@ -183,11 +183,33 @@ function buildRouterModelUrl(
 	modelId: string,
 	task: 'text-to-image' | 'image-to-image'
 ): string {
-	const routeProvider =
-		!provider || provider === 'auto' || provider === 'hf-inference' ? 'hf-inference' : provider
+	const routeProvider = resolveRouterProvider(provider)
+	const routedModelId = applyRoutingPolicyToModelId(provider, modelId)
 	void task
-	const path = `models/${modelId}`
+	const path = `models/${routedModelId}`
 	return `https://router.huggingface.co/${routeProvider}/${path}`
+}
+
+function resolveRouterProvider(provider: string): string {
+	if (!provider || provider === 'auto' || provider === 'fastest' || provider === 'cheapest') {
+		return 'hf-inference'
+	}
+	return provider
+}
+
+function applyRoutingPolicyToModelId(provider: string, modelId: string): string {
+	const normalizedModelId = modelId.trim()
+	if (!normalizedModelId) return normalizedModelId
+	if (normalizedModelId.includes(':')) return normalizedModelId
+
+	if (provider === 'fastest' || provider === 'auto') {
+		return `${normalizedModelId}:fastest`
+	}
+	if (provider === 'cheapest') {
+		return `${normalizedModelId}:cheapest`
+	}
+
+	return normalizedModelId
 }
 
 function resolveUpscaleModelId(params: UpscaleParams): string {

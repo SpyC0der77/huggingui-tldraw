@@ -20,8 +20,22 @@ interface ExecutedExecutionGraphNode {
 	readonly connections: NodePortConnection[]
 	readonly outputs: ExecutionResult
 }
+interface FailedExecutionGraphNode {
+	readonly state: 'failed'
+	readonly shape: NodeShape
+	readonly connections: NodePortConnection[]
+	readonly error: string
+}
 
-type ExecutionGraphNode = PendingExecutionGraphNode | ExecutedExecutionGraphNode
+type ExecutionGraphNode =
+	| PendingExecutionGraphNode
+	| ExecutedExecutionGraphNode
+	| FailedExecutionGraphNode
+
+export interface ExecutionNodeSnapshot {
+	status: 'waiting' | 'executing' | 'executed' | 'failed'
+	error: string | null
+}
 
 export class ExecutionGraph {
 	private readonly nodesById = new AtomMap<TLShapeId, ExecutionGraphNode>('node by id')
@@ -137,18 +151,27 @@ export class ExecutionGraph {
 			type: node.shape.type,
 			props: { isOutOfDate: true },
 		})
-		const outputs = await executeNode(this.editor, node.shape, inputs)
-		this.editor.updateShape({
-			id: nodeId,
-			type: node.shape.type,
-			props: { isOutOfDate: false },
-		})
-
-		this.nodesById.set(nodeId, {
-			...node,
-			state: 'executed',
-			outputs,
-		})
+		try {
+			const outputs = await executeNode(this.editor, node.shape, inputs)
+			this.nodesById.set(nodeId, {
+				...node,
+				state: 'executed',
+				outputs,
+			})
+		} catch (error) {
+			this.nodesById.set(nodeId, {
+				...node,
+				state: 'failed',
+				error: error instanceof Error ? error.message : String(error),
+			})
+			return
+		} finally {
+			this.editor.updateShape({
+				id: nodeId,
+				type: node.shape.type,
+				props: { isOutOfDate: false },
+			})
+		}
 
 		const executingDependentPromises = []
 		for (const connection of Object.values(node.connections)) {
@@ -162,5 +185,44 @@ export class ExecutionGraph {
 
 	getNodeStatus(nodeId: TLShapeId) {
 		return this.nodesById.get(nodeId)?.state
+	}
+
+	getNodeSnapshot(nodeId: TLShapeId): ExecutionNodeSnapshot | null {
+		const node = this.nodesById.get(nodeId)
+		if (!node) return null
+
+		return {
+			status: node.state,
+			error: node.state === 'failed' ? node.error : null,
+		}
+	}
+
+	getSnapshotByNodeId(): Record<string, ExecutionNodeSnapshot> {
+		const snapshot: Record<string, ExecutionNodeSnapshot> = {}
+
+		for (const node of this.nodesById.values()) {
+			const failureMessage = this.getBlockingFailureMessage(node)
+			snapshot[node.shape.id] = {
+				status: node.state,
+				error: node.state === 'failed' ? node.error : failureMessage,
+			}
+		}
+
+		return snapshot
+	}
+
+	private getBlockingFailureMessage(node: ExecutionGraphNode): string | null {
+		if (node.state !== 'waiting') return null
+
+		for (const connection of node.connections) {
+			if (connection.terminal !== 'end') continue
+
+			const dependency = this.nodesById.get(connection.connectedShapeId)
+			if (dependency?.state === 'failed') {
+				return `Blocked by upstream failure (${dependency.shape.props.node.type}).`
+			}
+		}
+
+		return null
 	}
 }

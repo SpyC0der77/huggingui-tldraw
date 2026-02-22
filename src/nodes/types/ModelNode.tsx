@@ -24,6 +24,8 @@ interface ProviderInfo {
 }
 
 const PROVIDERS: ProviderInfo[] = [
+	{ id: 'fastest', label: 'Fastest (HF policy)' },
+	{ id: 'cheapest', label: 'Cheapest (HF policy)' },
 	{ id: 'auto', label: 'Auto (HF Router)' },
 	{ id: 'hf-inference', label: 'HF Inference' },
 	{ id: 'fal-ai', label: 'fal' },

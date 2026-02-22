@@ -231,11 +231,19 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 		[editor, shape.id]
 	)
 
-	const isExecuting = useValue(
-		'is executing',
-		() => executionState.get(editor).runningGraph?.getNodeStatus(shape.id) === 'executing',
+	const nodeExecution = useValue(
+		'node execution',
+		() => {
+			const execution = executionState.get(editor)
+			return (
+				execution.runningGraph?.getNodeSnapshot(shape.id) ?? execution.lastRunByNode[shape.id] ?? null
+			)
+		},
 		[editor, shape.id]
 	)
+	const isExecuting = nodeExecution?.status === 'executing'
+	const isFailed = nodeExecution?.status === 'failed'
+	const statusMessage = nodeExecution?.error ?? null
 
 	const isGraphRunning = useValue(
 		'is graph running',
@@ -249,6 +257,7 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 		<HTMLContainer
 			className={classNames('NodeShape', {
 				NodeShape_executing: isExecuting,
+				NodeShape_failed: isFailed,
 			})}
 			onContextMenu={(e) => {
 				const target = e.target as HTMLElement
@@ -278,6 +287,7 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 					</>
 				)}
 			</div>
+			{statusMessage ? <div className="NodeShape-statusMessage">{statusMessage}</div> : null}
 			<NodeBody shape={shape} />
 			<div className="NodeShape-footer">
 				<button

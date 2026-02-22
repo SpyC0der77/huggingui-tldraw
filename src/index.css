@@ -65,6 +65,17 @@ body {
 		white-space: nowrap;
 	}
 
+	.NodeShape-statusMessage {
+		margin: 0 var(--tl-space-4) var(--tl-space-2);
+		padding: 6px 8px;
+		border-radius: var(--tl-radius-2);
+		font-size: 11px;
+		line-height: 1.35;
+		color: color-mix(in srgb, var(--tl-color-warn) 85%, black);
+		background: color-mix(in srgb, var(--tl-color-warn) 14%, transparent);
+		border: 1px solid color-mix(in srgb, var(--tl-color-warn) 38%, transparent);
+	}
+
 	/* Enable pointer events on the entire node body so all interactive
 	   elements work. The heading stays inert (drag handle for tldraw). */
 	[data-state='select.idle'] & > :not(.NodeShape-heading) {
@@ -125,6 +136,13 @@ body {
 	&.NodeShape_executing {
 		box-shadow:
 			0 0 0 calc(2px / var(--tl-zoom)) var(--tl-color-selected),
+			0 2px 6px rgba(0, 0, 0, 0.08),
+			0 1px 2px rgba(0, 0, 0, 0.04);
+	}
+
+	&.NodeShape_failed {
+		box-shadow:
+			0 0 0 calc(2px / var(--tl-zoom)) var(--tl-color-warn),
 			0 2px 6px rgba(0, 0, 0, 0.08),
 			0 1px 2px rgba(0, 0, 0, 0.04);
 	}
