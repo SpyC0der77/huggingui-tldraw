@@ -122,14 +122,15 @@ function ModelNodeComponent({ shape, node }: NodeComponentProps<ModelNode>) {
 
 	return (
 		<>
-			<NodeRow>
-				<span className="NodeInputRow-label">Provider</span>
-				<select
-					value={provider}
-					onChange={(e) => {
-						updateNode<ModelNode>(editor, shape, (n) => ({
-							...n,
-							provider: e.target.value,
+				<NodeRow>
+					<span className="NodeInputRow-label">Provider</span>
+					<select
+						value={provider}
+						onPointerDown={(e) => e.stopPropagation()}
+						onChange={(e) => {
+							updateNode<ModelNode>(editor, shape, (n) => ({
+								...n,
+								provider: e.target.value,
 							modelId: n.modelId || DEFAULT_HF_MODEL_ID,
 						}))
 					}}
@@ -144,14 +145,15 @@ function ModelNodeComponent({ shape, node }: NodeComponentProps<ModelNode>) {
 
 			<NodeRow className="NodeInputRow">
 				<span className="NodeInputRow-label">Model</span>
-				<input
-					type="text"
-					list={`${shape.id}_hf_models`}
-					value={node.modelId}
-					onChange={(e) =>
-						updateNode<ModelNode>(editor, shape, (n) => ({
-							...n,
-							modelId: e.target.value,
+					<input
+						type="text"
+						list={`${shape.id}_hf_models`}
+						value={node.modelId}
+						onPointerDown={(e) => e.stopPropagation()}
+						onChange={(e) =>
+							updateNode<ModelNode>(editor, shape, (n) => ({
+								...n,
+								modelId: e.target.value,
 						}))
 					}
 					placeholder="org/model-id"

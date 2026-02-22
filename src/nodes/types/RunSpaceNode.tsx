@@ -418,7 +418,18 @@ function ParameterRow({
 						type="text"
 						inputMode="decimal"
 						value={String(effectiveValue ?? '')}
-						onChange={(e) => onChange(Number(e.target.value))}
+						onChange={(e) => {
+							const parsed = Number(e.target.value)
+							if (Number.isNaN(parsed)) {
+								const fallback =
+									typeof effectiveValue === 'number'
+										? effectiveValue
+										: Number(defaultForType(typeName))
+								onChange(Number.isNaN(fallback) ? 0 : fallback)
+								return
+							}
+							onChange(parsed)
+						}}
 						onPointerDown={(e) => e.stopPropagation()}
 						disabled={disableSeedInput}
 					/>
@@ -503,8 +514,26 @@ function coerceParameterValue(parameter: SpaceEndpointParameter, value: unknown)
 		return parameter.parameter_has_default ? parameter.parameter_default : defaultForType(parameter.type?.type)
 	}
 	if (parameter.type?.type === 'boolean') return Boolean(value)
-	if (parameter.type?.type === 'number' || parameter.type?.type === 'integer') {
-		return typeof value === 'number' ? value : Number(value)
+	if (parameter.type?.type === 'number') {
+		const numeric = typeof value === 'number' ? value : Number(value)
+		if (Number.isNaN(numeric)) {
+			return parameter.parameter_has_default
+				? parameter.parameter_default
+				: defaultForType(parameter.type?.type)
+		}
+		return numeric
+	}
+	if (parameter.type?.type === 'integer') {
+		const numeric =
+			typeof value === 'number'
+				? Math.trunc(value)
+				: parseInt(String(value), 10)
+		if (Number.isNaN(numeric)) {
+			return parameter.parameter_has_default
+				? parameter.parameter_default
+				: defaultForType(parameter.type?.type)
+		}
+		return numeric
 	}
 	return value
 }

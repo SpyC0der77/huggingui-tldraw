@@ -65,19 +65,23 @@ export interface SpaceInfoResult {
 }
 
 export async function apiSpaceInfo(spaceId: string): Promise<SpaceInfoResult> {
-	const response = await fetch('/api/space-info', {
-		method: 'POST',
-		credentials: 'include',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ spaceId }),
-	})
+	try {
+		const response = await fetch('/api/space-info', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ spaceId }),
+		})
 
-	if (!response.ok) {
-		const err = await response.json().catch(() => ({ error: response.statusText }))
-		throw new Error((err as { error?: string }).error ?? 'Failed to fetch Space schema')
+		if (!response.ok) {
+			const err = await response.json().catch(() => ({ error: response.statusText }))
+			throw new Error((err as { error?: string }).error ?? 'Failed to fetch Space schema')
+		}
+
+		return (await response.json()) as SpaceInfoResult
+	} catch (e) {
+		throw new Error(`Backend unavailable: ${e instanceof Error ? e.message : e}`)
 	}
-
-	return (await response.json()) as SpaceInfoResult
 }
 
 export interface RunSpaceParams {
@@ -95,17 +99,21 @@ export interface RunSpaceResult {
 }
 
 export async function apiRunSpace(params: RunSpaceParams): Promise<RunSpaceResult> {
-	const response = await fetch('/api/run-space', {
-		method: 'POST',
-		credentials: 'include',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(params),
-	})
+	try {
+		const response = await fetch('/api/run-space', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(params),
+		})
 
-	if (!response.ok) {
-		const err = await response.json().catch(() => ({ error: response.statusText }))
-		throw new Error((err as { error?: string }).error ?? 'Failed to run Space endpoint')
+		if (!response.ok) {
+			const err = await response.json().catch(() => ({ error: response.statusText }))
+			throw new Error((err as { error?: string }).error ?? 'Failed to run Space endpoint')
+		}
+
+		return (await response.json()) as RunSpaceResult
+	} catch (e) {
+		throw new Error(`Backend unavailable: ${e instanceof Error ? e.message : e}`)
 	}
-
-	return (await response.json()) as RunSpaceResult
 }
