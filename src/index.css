@@ -56,6 +56,13 @@ body {
 		font-size: 13px;
 	}
 
+	.NodeShape-headerAction {
+		flex: 0 0 auto;
+		height: 30px;
+		font-size: 11px;
+		padding: 0 10px;
+	}
+
 	.NodeShape-output {
 		font-variant-numeric: tabular-nums;
 		font-size: 11px;
@@ -69,6 +76,16 @@ body {
 	/* Enable pointer events on the entire node body so all interactive
 	   elements work. The heading stays inert (drag handle for tldraw). */
 	[data-state='select.idle'] & > :not(.NodeShape-heading) {
+		pointer-events: all;
+	}
+
+	/* Allow explicit header actions (e.g. Run space refresh) to be clickable. */
+	[data-state='select.idle'] & .NodeShape-heading .NodeShape-headerAction {
+		pointer-events: all;
+	}
+
+	/* Allow links rendered in the heading output slot to be clickable. */
+	[data-state='select.idle'] & .NodeShape-heading .NodeShape-output .NodeLink {
 		pointer-events: all;
 	}
 
@@ -221,6 +238,69 @@ body {
 	overflow-wrap: anywhere;
 }
 
+/* ---- UI error modal ---- */
+
+.UiErrorModal-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: calc(var(--tl-layer-overlays) + 11);
+	background: rgba(15, 23, 42, 0.22);
+	pointer-events: all;
+}
+
+.UiErrorModal {
+	width: min(560px, calc(100vw - 40px));
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	border-radius: 14px;
+	border: 1px solid #fecaca;
+	background: white;
+	box-shadow:
+		0 24px 60px rgba(0, 0, 0, 0.28),
+		0 1px 0 rgba(255, 255, 255, 0.6) inset;
+	padding: 12px;
+}
+
+.UiErrorModal-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.UiErrorModal-header h3 {
+	margin: 0;
+	flex: 1 1 auto;
+	font-size: 14px;
+	font-weight: 700;
+	color: #991b1b;
+}
+
+.UiErrorModal-header button {
+	height: 30px;
+	padding: 0 10px;
+	border-radius: 8px;
+	border: 1px solid #fca5a5;
+	background: #fff1f2;
+	color: #b91c1c;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.UiErrorModal-message {
+	border: 1px solid #fecaca;
+	background: #fef2f2;
+	border-radius: 10px;
+	padding: 10px;
+	font-size: 12px;
+	line-height: 1.35;
+	color: #7f1d1d;
+	overflow-wrap: anywhere;
+}
+
 
 /* ---- Node rows ---- */
 
@@ -363,6 +443,12 @@ body {
 	flex: 0 0 auto;
 }
 
+.NodeLink {
+	color: var(--tl-color-selected);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
 .NodeValue_placeholder {
 	display: inline-block;
 	width: 18px;
@@ -474,6 +560,12 @@ body {
 		color: var(--tl-color-text-3);
 		opacity: 0.5;
 	}
+}
+
+.RunSpaceNode-error {
+	font-size: 11px;
+	line-height: 1.35;
+	color: #991b1b;
 }
 
 /* ---- Prompt node ---- */

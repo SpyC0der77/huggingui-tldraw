@@ -9,6 +9,15 @@ interface SpaceInfoResponse {
 	named_endpoints?: Record<string, unknown>
 }
 
+class SpaceInfoHttpError extends Error {
+	constructor(
+		message: string,
+		public readonly status: number
+	) {
+		super(message)
+	}
+}
+
 export async function POST(request: Request) {
 	const body = (await request.json()) as SpaceInfoRequest
 	const spaceId = body.spaceId?.trim()
@@ -41,13 +50,16 @@ export async function POST(request: Request) {
 
 		if (!infoResponse.ok) {
 			const text = await infoResponse.text()
+			const contentType = infoResponse.headers.get('content-type') ?? ''
+			const message = createSpaceInfoErrorMessage(spaceId, infoResponse.status, text, contentType)
 			console.error('[space-info] upstream non-200', {
 				requestId,
 				spaceId,
 				status: infoResponse.status,
 				bodyPreview: text.slice(0, 1200),
+				userMessage: message,
 			})
-			throw new Error(`Space info request failed (${infoResponse.status}): ${text}`)
+			throw new SpaceInfoHttpError(message, mapSpaceInfoStatus(infoResponse.status))
 		}
 
 		const info = (await infoResponse.json()) as SpaceInfoResponse
@@ -76,16 +88,43 @@ export async function POST(request: Request) {
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Failed to fetch Space info'
+		const status = error instanceof SpaceInfoHttpError ? error.status : 500
 		console.error('[space-info] failed', {
 			requestId,
 			spaceId,
 			errorName: error instanceof Error ? error.name : typeof error,
 			errorMessage: message,
 			errorStack: error instanceof Error ? error.stack : undefined,
+			status,
 		})
 		return Response.json(
 			{ error: message, requestId },
-			{ status: 500 }
+			{ status }
 		)
 	}
+}
+
+function mapSpaceInfoStatus(upstreamStatus: number): number {
+	if (upstreamStatus === 401 || upstreamStatus === 403) return upstreamStatus
+	if (upstreamStatus === 404) return 404
+	return 502
+}
+
+function createSpaceInfoErrorMessage(
+	spaceId: string,
+	status: number,
+	body: string,
+	contentType: string
+): string {
+	if (status === 404) {
+		return `Space "${spaceId}" was not found. Use the format "owner/space-name" and verify it exists.`
+	}
+	if (status === 401 || status === 403) {
+		return `Access to space "${spaceId}" was denied. Check your Hugging Face auth/token permissions.`
+	}
+	if (contentType.includes('text/html')) {
+		return `Failed to fetch schema for "${spaceId}" (HTTP ${status}). The space endpoint returned HTML instead of API metadata.`
+	}
+	const snippet = body.replace(/\s+/g, ' ').slice(0, 200)
+	return `Failed to fetch schema for "${spaceId}" (HTTP ${status}). ${snippet}`
 }

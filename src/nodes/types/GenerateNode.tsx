@@ -22,6 +22,7 @@ import {
 	NodeComponentProps,
 	NodeDefinition,
 	NodeImage,
+	NodeMaybeLink,
 	NodePlaceholder,
 	NodePortLabel,
 	NodeRow,
@@ -198,12 +199,7 @@ function GenerateNodeComponent({ shape, node }: NodeComponentProps<GenerateNode>
 								const display = isMultiInfoValue(promptInput)
 									? promptInput.value.filter((v): v is string => typeof v === 'string').join(', ')
 									: String(promptInput.value ?? '')
-								return (
-									<span title={display}>
-										{display.slice(0, 20)}
-										{display.length > 20 ? '...' : ''}
-									</span>
-								)
+								return <NodeMaybeLink text={display} maxLength={20} />
 							})()
 						)}
 					</span>
@@ -230,9 +226,7 @@ function GenerateNodeComponent({ shape, node }: NodeComponentProps<GenerateNode>
 						{negativeInput.isOutOfDate || negativeInput.value === STOP_EXECUTION ? (
 							<NodePlaceholder />
 						) : (
-							<span title={String(negativeInput.value)}>
-								{String(negativeInput.value ?? '').slice(0, 20)}
-							</span>
+							<NodeMaybeLink text={String(negativeInput.value ?? '')} maxLength={20} />
 						)}
 					</span>
 				) : (

@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import {
 	Box,
 	Circle2d,
@@ -25,6 +25,9 @@ import {
 	useUniqueSafeId,
 	useValue,
 } from 'tldraw'
+import { Button } from '@/components/ui/button'
+import { parseSpaceRef } from '@/lib/spaceRef'
+import { apiSpaceInfo } from '../api/pipelineApi'
 import { PlayIcon } from '../components/icons/PlayIcon'
 import { StopIcon } from '../components/icons/StopIcon'
 import {
@@ -33,11 +36,11 @@ import {
 	NODE_ROW_BOTTOM_PADDING_PX,
 	NODE_ROW_HEADER_GAP_PX,
 	PORT_RADIUS_PX,
-	PORT_TYPE_COLORS,
 } from '../constants'
+import { reportUiError } from '../errors/uiErrorState'
 import { executionState, startExecution, stopExecution } from '../execution/executionState'
 import { Port, ShapePort } from '../ports/Port'
-import { getNodeOutputPortInfo, getNodePorts } from './nodePorts'
+import { getNodeInputPortValues, getNodeOutputPortInfo, getNodePorts } from './nodePorts'
 import { getNodeDefinition, getNodeHeightPx, getNodeWidthPx, NodeBody, NodeType } from './nodeTypes'
 import { resizeNode } from './resizeNode'
 import { NodeValue, STOP_EXECUTION } from './types/shared'
@@ -126,50 +129,49 @@ export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 		info: TLResizeInfo<NodeShape>
 	): NodeResizeResult {
 		const definition = getNodeDefinition(this.editor, shape.props.node)
-		if (definition.canResizeNode) {
-			const node = shape.props.node as Record<string, unknown>
-			const prevW = getNodeWidthPx(this.editor, shape)
-			const prevH = getNodeHeightPx(this.editor, shape)
-			const newW = Math.max(200, Math.round(prevW * info.scaleX))
-			const newH = Math.max(120, Math.round(prevH * info.scaleY))
-			const bodyH =
-				newH -
-				NODE_HEADER_HEIGHT_PX -
-				NODE_ROW_HEADER_GAP_PX -
-				NODE_ROW_BOTTOM_PADDING_PX -
-				NODE_FOOTER_HEIGHT_PX
+		if (!definition.canResizeNode) return undefined
 
-			const resized = resizeNode(
-				shape as unknown as NodeShape & { props: { node: { w: number; h: number } } },
-				info as unknown as {
-					newPoint: VecModel
-					handle: TLResizeHandle
-					mode: TLResizeMode
-					scaleX: number
-					scaleY: number
-					initialBounds: Box
-					initialShape: NodeShape & { props: { node: { w: number; h: number } } }
-				}
-			) as unknown as NodeResizeResult
+		const node = shape.props.node as Record<string, unknown>
+		const prevW = getNodeWidthPx(this.editor, shape)
+		const prevH = getNodeHeightPx(this.editor, shape)
+		const newW = Math.max(200, Math.round(prevW * info.scaleX))
+		const newH = Math.max(120, Math.round(prevH * info.scaleY))
+		const bodyH =
+			newH -
+			NODE_HEADER_HEIGHT_PX -
+			NODE_ROW_HEADER_GAP_PX -
+			NODE_ROW_BOTTOM_PADDING_PX -
+			NODE_FOOTER_HEIGHT_PX
 
-			return {
-				...resized,
-				props: {
-					...shape.props,
-					node: {
-							...node,
-							w: newW,
-							h:
-								NODE_HEADER_HEIGHT_PX +
-								NODE_ROW_HEADER_GAP_PX +
-								Math.max(0, bodyH) +
-								NODE_ROW_BOTTOM_PADDING_PX +
-								NODE_FOOTER_HEIGHT_PX,
-						} as unknown as NodeShape['props']['node'],
-					},
-				} as unknown as NodeResizeResult
+		const resized = resizeNode(
+			shape as unknown as NodeShape & { props: { node: { w: number; h: number } } },
+			info as unknown as {
+				newPoint: VecModel
+				handle: TLResizeHandle
+				mode: TLResizeMode
+				scaleX: number
+				scaleY: number
+				initialBounds: Box
+				initialShape: NodeShape & { props: { node: { w: number; h: number } } }
 			}
-			return undefined
+		) as unknown as NodeResizeResult
+
+		return {
+			...resized,
+			props: {
+				...shape.props,
+				node: {
+					...node,
+					w: newW,
+					h:
+						NODE_HEADER_HEIGHT_PX +
+						NODE_ROW_HEADER_GAP_PX +
+						Math.max(0, bodyH) +
+						NODE_ROW_BOTTOM_PADDING_PX +
+						NODE_FOOTER_HEIGHT_PX,
+				} as unknown as NodeShape['props']['node'],
+			},
+		} as unknown as NodeResizeResult
 	}
 
 	component(shape: NodeShape) {
@@ -209,21 +211,13 @@ function NodeShapeIndicator({ shape, ports }: { shape: NodeShape; ports: ShapePo
 				))}
 			</mask>
 			<rect rx={9} width={width} height={getNodeHeightPx(editor, shape)} mask={`url(#${id})`} />
-			{ports.map((port) => (
-				<circle
-					key={port.id}
-					cx={port.x}
-					cy={port.y}
-					r={PORT_RADIUS_PX}
-					style={{ stroke: PORT_TYPE_COLORS[port.dataType] }}
-				/>
-			))}
 		</>
 	)
 }
 
 function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 	const editor = useEditor()
+	const [isRefreshingSchema, setIsRefreshingSchema] = useState(false)
 
 	const output = useValue(
 		'output',
@@ -251,6 +245,43 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 	)
 
 	const nodeDefinition = getNodeDefinition(editor, shape.props.node)
+	const connectedSpaceId = useValue(
+		'connected space id',
+		() => {
+			if (shape.props.node.type !== 'run_space') return null
+			const spaceInput = getNodeInputPortValues(editor, shape.id).space?.value
+			return parseSpaceRef(spaceInput as string | undefined)
+		},
+		[editor, shape.id, shape.props.node.type]
+	)
+
+	const refreshRunSpaceSchema = useCallback(async () => {
+		if (shape.props.node.type !== 'run_space') return
+		if (!connectedSpaceId) return
+
+		setIsRefreshingSchema(true)
+		try {
+			const info = await apiSpaceInfo(connectedSpaceId)
+			editor.updateShape({
+				id: shape.id,
+				type: shape.type,
+				props: {
+					node: refreshRunSpaceNodeSchema(shape.props.node, info),
+				},
+			})
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Failed to fetch Space schema. Check Space ID.'
+			reportUiError(editor, 'Space schema error', message)
+			console.error('[run-space-node] topbar refresh failed', {
+				shapeId: shape.id,
+				spaceId: connectedSpaceId,
+				message,
+			})
+		} finally {
+			setIsRefreshingSchema(false)
+		}
+	}, [connectedSpaceId, editor, shape.id, shape.props.node, shape.type])
 
 	return (
 		<HTMLContainer
@@ -269,6 +300,19 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 			<div className="NodeShape-heading">
 				<div className="NodeShape-icon">{nodeDefinition.icon}</div>
 				<div className="NodeShape-label">{nodeDefinition.heading ?? nodeDefinition.title}</div>
+				{shape.props.node.type === 'run_space' ? (
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className="NodeShape-headerAction"
+						onPointerDown={(e) => e.stopPropagation()}
+						onClick={() => void refreshRunSpaceSchema()}
+						disabled={!connectedSpaceId || isRefreshingSchema}
+					>
+						{isRefreshingSchema ? 'Refreshing...' : 'Refresh schema'}
+					</Button>
+				) : null}
 				{output !== undefined && (
 					<>
 						<div className="NodeShape-output">
@@ -286,7 +330,7 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 					</>
 					)}
 				</div>
-			<NodeBody shape={shape} />
+				<NodeBody shape={shape} />
 			<div className="NodeShape-footer">
 				<button
 					className={classNames('NodeShape-footer-action', {
@@ -308,6 +352,54 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 			</div>
 		</HTMLContainer>
 	)
+}
+
+function refreshRunSpaceNodeSchema(
+	node: NodeShape['props']['node'],
+	info: { endpoints: Array<{ apiName: string; parameters?: Array<{ parameter_name: string; parameter_has_default?: boolean; parameter_default?: unknown; type?: { type?: string } }>; returns?: unknown[]; show_api?: boolean }> }
+) {
+	if (node.type !== 'run_space') return node
+
+	const nextEndpoint =
+		info.endpoints.find((endpoint) => endpoint.apiName === node.endpoint) ?? info.endpoints[0] ?? null
+	const currentArgs = parseRunSpaceArgs(node.argsJson)
+	const nextArgs = { ...currentArgs }
+	for (const parameter of nextEndpoint?.parameters ?? []) {
+		const key = parameter.parameter_name
+		if (nextArgs[key] !== undefined) continue
+		nextArgs[key] = parameter.parameter_has_default
+			? parameter.parameter_default
+			: defaultRunSpaceArg(parameter.type?.type)
+	}
+
+	return {
+		...node,
+		endpoint: nextEndpoint?.apiName ?? '',
+		schemaJson: JSON.stringify({
+			endpoints: info.endpoints.map((endpoint) => ({
+				apiName: endpoint.apiName,
+				parameters: endpoint.parameters ?? [],
+				returns: endpoint.returns ?? [],
+				show_api: endpoint.show_api,
+			})),
+		}),
+		argsJson: JSON.stringify(nextArgs),
+	}
+}
+
+function parseRunSpaceArgs(raw: string): Record<string, unknown> {
+	try {
+		const parsed = JSON.parse(raw) as Record<string, unknown>
+		return parsed && typeof parsed === 'object' ? parsed : {}
+	} catch {
+		return {}
+	}
+}
+
+function defaultRunSpaceArg(typeName: string | undefined): unknown {
+	if (typeName === 'boolean') return false
+	if (typeName === 'number' || typeName === 'integer') return 0
+	return ''
 }
 
 function NodeFooterMenu({ shape }: { shape: NodeShape }) {

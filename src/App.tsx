@@ -6,6 +6,7 @@ import { ImagePipelineSidebar } from './components/ImagePipelineSidebar'
 import { OnCanvasNodePicker } from './components/OnCanvasNodePicker'
 import { PipelineRegions } from './components/PipelineRegions'
 import { overrides, PipelineToolbar } from './components/PipelineToolbar'
+import { UiErrorModal } from './components/UiErrorModal'
 import {
 	ConnectionBindingUtil,
 	createOrUpdateConnectionBinding,
@@ -31,6 +32,7 @@ const components: TLComponents = {
 			<OnCanvasNodePicker />
 			<PipelineRegions />
 			<ExecutionErrorModal />
+			<UiErrorModal />
 		</>
 	),
 	Toolbar: PipelineToolbar,

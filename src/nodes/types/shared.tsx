@@ -295,10 +295,49 @@ export function NodeValue({ value }: { value: PipelineValue | STOP_EXECUTION }) 
 
 	// For strings, truncate long values
 	const str = String(value)
-	if (str.length > 20) {
-		return <span title={str}>{str.slice(0, 18)}...</span>
+	return <NodeMaybeLink text={str} maxLength={20} />
+}
+
+export function NodeMaybeLink({
+	text,
+	maxLength,
+	className,
+}: {
+	text: string
+	maxLength?: number
+	className?: string
+}) {
+	const display =
+		maxLength && text.length > maxLength
+			? `${text.slice(0, Math.max(1, maxLength - 2))}...`
+			: text
+
+	if (!isHttpUrl(text)) {
+		return <span className={className} title={text}>{display}</span>
 	}
-	return <>{str}</>
+
+	return (
+		<a
+			className={classNames('NodeLink', className)}
+			href={text}
+			target="_blank"
+			rel="noreferrer noopener"
+			title={text}
+			onPointerDown={(e) => e.stopPropagation()}
+			onClick={(e) => e.stopPropagation()}
+		>
+			{display}
+		</a>
+	)
+}
+
+function isHttpUrl(value: string): boolean {
+	try {
+		const url = new URL(value)
+		return url.protocol === 'http:' || url.protocol === 'https:'
+	} catch {
+		return false
+	}
 }
 
 function formatNumber(value: number): string {

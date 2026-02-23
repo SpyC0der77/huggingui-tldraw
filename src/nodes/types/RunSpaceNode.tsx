@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { T, useEditor, useValue } from 'tldraw'
 import { parseSpaceRef } from '@/lib/spaceRef'
 import {
@@ -18,6 +18,7 @@ import {
 	NODE_WIDTH_PX,
 	PortDataType,
 } from '../../constants'
+import { reportUiError } from '../../errors/uiErrorState'
 import { Port, ShapePort } from '../../ports/Port'
 import { getNodeInputPortValues } from '../nodePorts'
 import { NodeShape } from '../NodeShapeUtil'
@@ -30,6 +31,7 @@ import {
 	NodeComponentProps,
 	NodeDefinition,
 	NodeImage,
+	NodeMaybeLink,
 	NodePlaceholder,
 	NodePortLabel,
 	NodeRow,
@@ -184,8 +186,6 @@ export class RunSpaceNodeDefinition extends NodeDefinition<RunSpaceNode> {
 
 function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>) {
 	const editor = useEditor()
-	const [isRefreshing, setIsRefreshing] = useState(false)
-	const [refreshError, setRefreshError] = useState<string | null>(null)
 	const inputValues = useValue('run space inputs', () => getNodeInputPortValues(editor, shape.id), [
 		editor,
 		shape.id,
@@ -195,11 +195,10 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 	const schema = useMemo(() => parseSchema(node.schemaJson), [node.schemaJson])
 	const endpoint = schema?.endpoints.find((entry) => entry.apiName === node.endpoint) ?? null
 	const argsState = useMemo(() => parseArgs(node.argsJson), [node.argsJson])
+	const previousSpaceIdRef = useRef<string | null>(null)
 
 	const refreshSchema = useCallback(async () => {
 		if (!spaceId) return
-		setIsRefreshing(true)
-		setRefreshError(null)
 		try {
 			const info = await apiSpaceInfo(spaceId)
 			const nextEndpoint = resolveEndpoint(node.endpoint, info)
@@ -211,14 +210,29 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 				argsJson: JSON.stringify(nextArgs),
 			}))
 		} catch (error) {
-			setRefreshError(error instanceof Error ? error.message : 'Failed to refresh Space schema')
-		} finally {
-			setIsRefreshing(false)
+			const message =
+				error instanceof Error ? error.message : 'Failed to fetch Space schema. Check Space ID.'
+			console.error('[run-space-node] schema refresh failed', {
+				shapeId: shape.id,
+				spaceId,
+				message,
+			})
+			reportUiError(editor, 'Space schema error', message)
 		}
 	}, [argsState, editor, node.endpoint, shape, spaceId])
 
 	useEffect(() => {
-		if (!spaceId) return
+		if (!spaceId) {
+			previousSpaceIdRef.current = null
+			return
+		}
+
+		if (previousSpaceIdRef.current !== spaceId) {
+			previousSpaceIdRef.current = spaceId
+			void refreshSchema()
+			return
+		}
+
 		if (!schema) {
 			void refreshSchema()
 		}
@@ -277,18 +291,6 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 				</select>
 			</NodeRow>
 
-			<NodeRow>
-				<button
-					className="RunSpaceNode-refresh"
-					onPointerDown={(e) => e.stopPropagation()}
-					onClick={() => void refreshSchema()}
-					disabled={!spaceId || isRefreshing}
-				>
-					{isRefreshing ? 'Refreshing...' : 'Refresh schema'}
-				</button>
-				{refreshError && <span className="NodeRow-disconnected">{refreshError.slice(0, 40)}</span>}
-			</NodeRow>
-
 			{(endpoint?.parameters ?? []).map((parameter) => (
 				<ParameterRow
 					key={parameter.parameter_name}
@@ -312,7 +314,9 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 				{node.lastResultUrl ? (
 					<NodeImage src={node.lastResultUrl} alt="Space result" />
 				) : node.lastResultText ? (
-					<div className="RunSpaceNode-result">{node.lastResultText}</div>
+					<div className="RunSpaceNode-result">
+						<NodeMaybeLink text={node.lastResultText} />
+					</div>
 				) : (
 					<div className="NodeImagePreview-empty">
 						<span>Run to execute selected Space endpoint</span>
@@ -578,14 +582,21 @@ function getParameterPortDataType(parameter: SpaceEndpointParameter): PortDataTy
 	return 'text'
 }
 
-function formatConnectedValue(value: unknown): string {
+function formatConnectedValue(value: unknown): ReactNode {
 	if (value == null) return ''
 	if (Array.isArray(value)) {
-		return value.map((entry) => formatConnectedValue(entry)).join(', ')
+		return value.map((entry) => formatConnectedValueText(entry)).join(', ')
 	}
 	if (typeof value === 'object') {
 		return '[object]'
 	}
+	return <NodeMaybeLink text={String(value)} maxLength={28} />
+}
+
+function formatConnectedValueText(value: unknown): string {
+	if (value == null) return ''
+	if (Array.isArray(value)) return value.map((entry) => formatConnectedValueText(entry)).join(', ')
+	if (typeof value === 'object') return '[object]'
 	return String(value)
 }
 
