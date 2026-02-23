@@ -243,7 +243,6 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 	)
 	const isExecuting = nodeExecution?.status === 'executing'
 	const isFailed = nodeExecution?.status === 'failed'
-	const statusMessage = nodeExecution?.error ?? null
 
 	const isGraphRunning = useValue(
 		'is graph running',
@@ -285,9 +284,8 @@ function NodeShapeComponent({ shape }: { shape: NodeShape }) {
 						</div>
 						<Port shapeId={shape.id} portId="output" />
 					</>
-				)}
-			</div>
-			{statusMessage ? <div className="NodeShape-statusMessage">{statusMessage}</div> : null}
+					)}
+				</div>
 			<NodeBody shape={shape} />
 			<div className="NodeShape-footer">
 				<button

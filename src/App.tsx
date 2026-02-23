@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createShapeId, Editor, TLComponents, Tldraw, TldrawOptions } from 'tldraw'
 import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel'
+import { ExecutionErrorModal } from './components/ExecutionErrorModal'
 import { ImagePipelineSidebar } from './components/ImagePipelineSidebar'
 import { OnCanvasNodePicker } from './components/OnCanvasNodePicker'
 import { PipelineRegions } from './components/PipelineRegions'
@@ -29,6 +30,7 @@ const components: TLComponents = {
 		<>
 			<OnCanvasNodePicker />
 			<PipelineRegions />
+			<ExecutionErrorModal />
 		</>
 	),
 	Toolbar: PipelineToolbar,
