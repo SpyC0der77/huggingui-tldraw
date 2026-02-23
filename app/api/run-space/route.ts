@@ -1,5 +1,9 @@
 import { getOptionalHuggingFaceAccessToken } from '@/lib/auth/huggingfaceToken'
-import { extractImageUrlFromSpaceOutput, runHuggingFaceSpace } from '@/lib/huggingfaceSpaces'
+import {
+	extractImageUrlFromSpaceOutput,
+	runHuggingFaceSpace,
+	summarizeSpaceOutputForDebug,
+} from '@/lib/huggingfaceSpaces'
 
 interface RunSpaceRequest {
 	spaceId: string
@@ -24,12 +28,22 @@ export async function POST(request: Request) {
 	try {
 		const token = getOptionalHuggingFaceAccessToken(request)
 		const args = Array.isArray(body.args) ? body.args : []
+		const argPreview = args.map((arg) => {
+			if (typeof arg === 'string') return arg.slice(0, 120)
+			try {
+				return JSON.stringify(arg).slice(0, 120)
+			} catch {
+				return String(arg)
+			}
+		})
 		console.info('[run-space] start', {
 			requestId,
 			spaceId,
 			apiName,
 			authMode: token ? 'token_present' : 'no_token',
 			argCount: args.length,
+			argTypes: args.map((arg) => (Array.isArray(arg) ? 'array' : typeof arg)),
+			argPreview,
 		})
 		const result = await runHuggingFaceSpace({
 			spaceId,
@@ -38,6 +52,7 @@ export async function POST(request: Request) {
 			accessToken: token,
 		})
 		const imageUrl = extractImageUrlFromSpaceOutput(result.output, result.baseUrl)
+		const outputDebug = summarizeSpaceOutputForDebug(result.output, result.baseUrl)
 		console.info('[run-space] success', {
 			requestId,
 			spaceId,
@@ -45,10 +60,27 @@ export async function POST(request: Request) {
 			baseUrl: result.baseUrl,
 			hasImageUrl: Boolean(imageUrl),
 			outputType: Array.isArray(result.output) ? 'array' : typeof result.output,
+			outputTopLevelKeys: outputDebug.topLevelKeys,
 			outputPreview: imageUrl
 				? undefined
-				: JSON.stringify(result.output, null, 2).slice(0, 600),
+				: JSON.stringify(result.output, null, 2).slice(0, 2400),
 		})
+		if (!imageUrl) {
+			console.warn('[run-space] no image extracted', {
+				requestId,
+				spaceId,
+				apiName,
+				debug: outputDebug,
+			})
+		}
+		if (result.debug) {
+			console.info('[run-space] stream parse debug', {
+				requestId,
+				spaceId,
+				apiName,
+				...result.debug,
+			})
+		}
 
 		return Response.json({
 			requestId,
