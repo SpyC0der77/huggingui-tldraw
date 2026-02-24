@@ -77,7 +77,8 @@ export class RunSpaceNodeDefinition extends NodeDefinition<RunSpaceNode> {
 		const schema = parseSchema(node.schemaJson)
 		const endpoint = schema?.endpoints.find((item) => item.apiName === node.endpoint)
 		const paramCount = endpoint?.parameters?.length ?? 0
-		return NODE_ROW_HEIGHT_PX * (3 + paramCount) + NODE_IMAGE_PREVIEW_HEIGHT_PX
+		// Body rows: Space input + Endpoint selector + one row per endpoint parameter.
+		return NODE_ROW_HEIGHT_PX * (2 + paramCount) + NODE_IMAGE_PREVIEW_HEIGHT_PX
 	}
 
 	getPorts(_shape: NodeShape, node: RunSpaceNode): Record<string, ShapePort> {
@@ -641,7 +642,7 @@ function buildEndpointParameterPorts(
 
 	for (const [index, parameter] of (endpoint.parameters ?? []).entries()) {
 		if (!shouldExposeConnectionPort(parameter)) continue
-		const rowOffset = 3 + index
+		const rowOffset = 2 + index
 		const portId = getParameterPortId(parameter.parameter_name)
 		ports[portId] = {
 			id: portId,

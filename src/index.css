@@ -314,10 +314,16 @@ body {
 	padding: var(--tl-space-2) var(--tl-space-4);
 	position: relative;
 
+	/* Allow flex children to shrink inside fixed-width nodes. */
+	& > * {
+		min-width: 0;
+	}
+
 	input[type='text'],
 	select {
 		align-self: stretch;
 		flex: 1 1 auto;
+		min-width: 0;
 		border: 1px solid var(--tl-color-hint);
 		padding: 0 var(--tl-space-4);
 		border-radius: var(--tl-radius-3);
@@ -356,6 +362,7 @@ body {
 
 	textarea {
 		flex: 1 1 auto;
+		min-width: 0;
 		border: 1px solid var(--tl-color-hint);
 		padding: var(--tl-space-3) var(--tl-space-4);
 		border-radius: var(--tl-radius-3);
@@ -413,6 +420,7 @@ body {
 	font-size: 11px;
 	color: var(--tl-color-text-3);
 	flex: 1 1 auto;
+	min-width: 0;
 	text-align: right;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -424,8 +432,12 @@ body {
 	color: var(--tl-color-text-3);
 	opacity: 0.5;
 	flex: 1 1 auto;
+	min-width: 0;
 	text-align: right;
 	font-style: italic;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .NodeRow-value {
