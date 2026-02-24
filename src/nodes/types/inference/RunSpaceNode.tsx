@@ -8,8 +8,8 @@ import {
 	SpaceEndpointInfo,
 	SpaceEndpointParameter,
 	SpaceInfoResult,
-} from '../../api/pipelineApi'
-import { SpacesIcon } from '../../components/icons/SpacesIcon'
+} from '../../../api/pipelineApi'
+import { SpacesIcon } from '../../../components/icons/SpacesIcon'
 import {
 	NODE_HEADER_HEIGHT_PX,
 	NODE_IMAGE_PREVIEW_HEIGHT_PX,
@@ -17,11 +17,11 @@ import {
 	NODE_ROW_HEIGHT_PX,
 	NODE_WIDTH_PX,
 	PortDataType,
-} from '../../constants'
-import { reportUiError } from '../../errors/uiErrorState'
-import { Port, ShapePort } from '../../ports/Port'
-import { getNodeInputPortValues } from '../nodePorts'
-import { NodeShape } from '../NodeShapeUtil'
+} from '../../../constants'
+import { reportUiError } from '../../../errors/uiErrorState'
+import { Port, ShapePort } from '../../../ports/Port'
+import { getNodeInputPortValues } from '../../nodePorts'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	areAnyInputsOutOfDate,
 	ExecutionResult,
@@ -37,7 +37,7 @@ import {
 	NodeRow,
 	STOP_EXECUTION,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 interface EndpointSchema {
 	endpoints: SpaceEndpointInfo[]
@@ -298,7 +298,7 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 					shapeId={shape.id}
 					portId={getParameterPortId(parameter.parameter_name)}
 					portDataType={getParameterPortDataType(parameter)}
-					hasConnectionPort= {shouldExposeConnectionPort(parameter)}
+					hasConnectionPort={shouldExposeConnectionPort(parameter)}
 					parameter={parameter}
 					value={argsState[parameter.parameter_name]}
 					connectedInput={inputValues[getParameterPortId(parameter.parameter_name)]}

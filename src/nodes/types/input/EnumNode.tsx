@@ -1,9 +1,9 @@
 import { T, useEditor } from 'tldraw'
-import { EnumIcon } from '../../components/icons/EnumIcon'
-import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../constants'
-import { ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { NodeShape } from '../NodeShapeUtil'
+import { EnumIcon } from '../../../components/icons/EnumIcon'
+import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../../constants'
+import { ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -11,7 +11,7 @@ import {
 	NodeDefinition,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 export type EnumNode = T.TypeOf<typeof EnumNode>
 export const EnumNode = T.object({

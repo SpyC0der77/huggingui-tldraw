@@ -16,7 +16,6 @@ body {
 	--port-color-text: #4caf50;
 	--port-color-model: #2196f3;
 	--port-color-number: #9e9e9e;
-	--port-color-latent: #ff9800;
 	--port-color-any: #b0b0b0;
 }
 
@@ -525,9 +524,9 @@ body {
 	}
 }
 
-/* ---- Load image node ---- */
+/* ---- Image node ---- */
 
-.LoadImageNode-browse {
+.ImageNode-browse {
 	flex: 1 1 auto;
 	border: 1px solid var(--tl-color-hint);
 	border-radius: var(--tl-radius-3);
@@ -542,7 +541,7 @@ body {
 	}
 }
 
-.LoadImageNode-clear {
+.ImageNode-clear {
 	flex: 0 0 auto;
 	border: 1px solid var(--tl-color-hint);
 	border-radius: var(--tl-radius-3);
@@ -1121,83 +1120,48 @@ body {
 	position: relative;
 }
 
-.ExampleSelector {
+.ConnectionColorLegend {
 	position: absolute;
-	top: 14px;
-	right: 14px;
-	z-index: 200;
-	display: grid;
-	gap: 6px;
-	padding: 10px;
-	border: 1px solid color-mix(in srgb, var(--tl-color-hint) 80%, var(--tl-color-text) 20%);
-	border-radius: 12px;
-	background: color-mix(in srgb, var(--tl-color-panel) 86%, white 14%);
-	backdrop-filter: blur(8px);
-	box-shadow:
-		0 8px 24px rgba(0, 0, 0, 0.12),
-		0 1px 0 rgba(255, 255, 255, 0.5) inset;
+	bottom: 12px;
+	right: 12px;
+	z-index: 100;
+	pointer-events: none;
+	padding: 8px 12px;
+	border-radius: var(--tl-radius-3);
+	background: color-mix(in srgb, var(--tl-color-panel) 92%, transparent 8%);
+	border: 1px solid color-mix(in srgb, var(--tl-color-hint) 60%, transparent 40%);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.ExampleSelector-label {
-	font-size: 11px;
-	font-weight: 700;
+.ConnectionColorLegend-title {
+	font-size: 10px;
+	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	color: var(--tl-color-text-3);
+	margin-bottom: 6px;
 }
 
-.ExampleSelector-controls {
+.ConnectionColorLegend-items {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ConnectionColorLegend-item {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 6px;
 }
 
-.ExampleSelector {
-	select,
-	button {
-		height: 32px;
-		border-radius: var(--tl-radius-2);
-		border: 1px solid color-mix(in srgb, var(--tl-color-hint) 70%, var(--tl-color-text) 30%);
-		background: color-mix(in srgb, var(--tl-color-panel) 92%, white 8%);
-		color: var(--tl-color-text);
-		font-size: 12px;
-		padding: 0 10px;
-	}
-
-	select {
-		min-width: 180px;
-	}
-
-	button {
-		cursor: pointer;
-		font-weight: 600;
-		background: color-mix(in srgb, var(--tl-color-selected) 12%, var(--tl-color-panel) 88%);
-	}
-
-	button:hover {
-		border-color: var(--tl-color-selected);
-		background: color-mix(in srgb, var(--tl-color-selected) 18%, var(--tl-color-panel) 82%);
-	}
-
-	select:focus,
-	button:focus {
-		outline: 2px solid color-mix(in srgb, var(--tl-color-selected) 55%, transparent);
-		outline-offset: 1px;
-	}
+.ConnectionColorLegend-swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+	flex-shrink: 0;
 }
 
-@media (max-width: 900px) {
-	.ExampleSelector {
-		top: 10px;
-		right: 10px;
-		padding: 8px;
-	}
-
-	.ExampleSelector-controls {
-		gap: 6px;
-	}
-
-	.ExampleSelector select {
-		min-width: 150px;
-	}
+.ConnectionColorLegend-label {
+	font-size: 11px;
+	color: var(--tl-color-text-2);
 }

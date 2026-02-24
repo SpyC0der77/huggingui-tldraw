@@ -4,11 +4,11 @@ import {
 	DEFAULT_HF_PROVIDER,
 	encodeModelRef,
 } from '@/lib/modelRef'
-import { ModelIcon } from '../../components/icons/ModelIcon'
-import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../constants'
-import { ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { NodeShape } from '../NodeShapeUtil'
+import { ModelIcon } from '../../../components/icons/ModelIcon'
+import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../../constants'
+import { ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -16,7 +16,7 @@ import {
 	NodeDefinition,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 interface ProviderInfo {
 	id: string

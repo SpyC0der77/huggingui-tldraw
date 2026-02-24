@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react'
 import { T, useEditor } from 'tldraw'
-import { LoadImageIcon } from '../../components/icons/LoadImageIcon'
+import { ImageIcon } from '../../../components/icons/ImageIcon'
 import {
 	NODE_HEADER_HEIGHT_PX,
 	NODE_IMAGE_PREVIEW_HEIGHT_PX,
 	NODE_ROW_HEIGHT_PX,
 	NODE_WIDTH_PX,
-} from '../../constants'
-import { ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { NodeShape } from '../NodeShapeUtil'
+} from '../../../constants'
+import { ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -18,24 +18,24 @@ import {
 	NodeImage,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
-export type LoadImageNode = T.TypeOf<typeof LoadImageNode>
-export const LoadImageNode = T.object({
-	type: T.literal('load_image'),
+export type ImageNode = T.TypeOf<typeof ImageNode>
+export const ImageNode = T.object({
+	type: T.literal('image'),
 	imageUrl: T.string.nullable(),
 })
 
-export class LoadImageNodeDefinition extends NodeDefinition<LoadImageNode> {
-	static type = 'load_image'
-	static validator = LoadImageNode
-	title = 'Load image'
+export class ImageNodeDefinition extends NodeDefinition<ImageNode> {
+	static type = 'image'
+	static validator = ImageNode
+	title = 'Image'
 	heading = 'Image'
-	icon = (<LoadImageIcon />)
+	icon = (<ImageIcon />)
 	category = 'input'
-	getDefault(): LoadImageNode {
+	getDefault(): ImageNode {
 		return {
-			type: 'load_image',
+			type: 'image',
 			imageUrl: null,
 		}
 	}
@@ -53,11 +53,11 @@ export class LoadImageNodeDefinition extends NodeDefinition<LoadImageNode> {
 			},
 		}
 	}
-	async execute(_shape: NodeShape, node: LoadImageNode): Promise<ExecutionResult> {
+	async execute(_shape: NodeShape, node: ImageNode): Promise<ExecutionResult> {
 		await sleep(300)
 		return { output: node.imageUrl }
 	}
-	getOutputInfo(shape: NodeShape, node: LoadImageNode): InfoValues {
+	getOutputInfo(shape: NodeShape, node: ImageNode): InfoValues {
 		return {
 			output: {
 				value: node.imageUrl,
@@ -66,7 +66,7 @@ export class LoadImageNodeDefinition extends NodeDefinition<LoadImageNode> {
 			},
 		}
 	}
-	Component = LoadImageNodeComponent
+	Component = ImageNodeComponent
 }
 
 /** Read a File as a data URL. */
@@ -111,7 +111,7 @@ function selectImageFile(): Promise<File | null> {
 	})
 }
 
-function LoadImageNodeComponent({ shape, node }: NodeComponentProps<LoadImageNode>) {
+function ImageNodeComponent({ shape, node }: NodeComponentProps<ImageNode>) {
 	const editor = useEditor()
 	const [isDragOver, setIsDragOver] = useState(false)
 
@@ -119,7 +119,7 @@ function LoadImageNodeComponent({ shape, node }: NodeComponentProps<LoadImageNod
 		async (file: File) => {
 			if (!file.type.startsWith('image/')) return
 			const dataUrl = await readFileAsDataUrl(file)
-			updateNode<LoadImageNode>(editor, shape, (n) => ({ ...n, imageUrl: dataUrl }))
+			updateNode<ImageNode>(editor, shape, (n) => ({ ...n, imageUrl: dataUrl }))
 		},
 		[editor, shape]
 	)
@@ -156,7 +156,7 @@ function LoadImageNodeComponent({ shape, node }: NodeComponentProps<LoadImageNod
 		<>
 			<NodeRow>
 				<button
-					className="LoadImageNode-browse"
+					className="ImageNode-browse"
 					onClick={handleBrowse}
 					onPointerDown={(e) => e.stopPropagation()}
 				>
@@ -164,9 +164,9 @@ function LoadImageNodeComponent({ shape, node }: NodeComponentProps<LoadImageNod
 				</button>
 				{node.imageUrl && (
 					<button
-						className="LoadImageNode-clear"
+						className="ImageNode-clear"
 						onClick={() =>
-							updateNode<LoadImageNode>(editor, shape, (n) => ({ ...n, imageUrl: null }))
+							updateNode<ImageNode>(editor, shape, (n) => ({ ...n, imageUrl: null }))
 						}
 						onPointerDown={(e) => e.stopPropagation()}
 						title="Clear image"

@@ -1,10 +1,10 @@
 import { T, useEditor } from 'tldraw'
 import { encodeSpaceRef } from '@/lib/spaceRef'
-import { SpacesIcon } from '../../components/icons/SpacesIcon'
-import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../constants'
-import { ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { NodeShape } from '../NodeShapeUtil'
+import { SpacesIcon } from '../../../components/icons/SpacesIcon'
+import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../../constants'
+import { ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -12,7 +12,7 @@ import {
 	NodeDefinition,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 export type SpaceNode = T.TypeOf<typeof SpaceNode>
 export const SpaceNode = T.object({

@@ -6,10 +6,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 	input: 'Input',
 	process: 'Process',
 	output: 'Output',
+	scripting: 'Scripting',
 	utility: 'Utility',
 }
 
-const CATEGORY_ORDER = ['input', 'process', 'output', 'utility']
+const CATEGORY_ORDER = ['input', 'process', 'output', 'scripting', 'utility']
 
 const DRAG_DISTANCE_SQ = 36 // 6px
 
@@ -26,10 +27,10 @@ const DRAG_DISTANCE_SQ = 36 // 6px
  *   { id: 'image-to-text', label: 'Image-to-text' },
  * ]
  * const TASK_NODE_WHITELIST: Record<TaskMode, Set<string>> = {
- *   'image-to-image': new Set(['model', 'load_image', 'prompt', 'generate', 'preview']),
+ *   'image-to-image': new Set(['model', 'image', 'prompt', 'generate', 'preview']),
  *   'text-to-image': new Set(['model', 'prompt', 'generate', 'preview']),
  *   'text-to-text': new Set(['prompt']),
- *   'image-to-text': new Set(['load_image']),
+ *   'image-to-text': new Set(['image']),
  * }
  */
 

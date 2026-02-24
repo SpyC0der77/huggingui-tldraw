@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { createShapeId, Editor, TLComponents, Tldraw, TldrawOptions } from 'tldraw'
+import { ConnectionColorLegend } from './components/ConnectionColorLegend'
+import { ExampleSelector } from './components/ExampleSelector'
 import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel'
 import { ExecutionErrorModal } from './components/ExecutionErrorModal'
 import { ImagePipelineSidebar } from './components/ImagePipelineSidebar'
@@ -80,29 +82,13 @@ function App() {
 				{editor ? <ImagePipelineSidebar editor={editor} /> : <div />}
 			</div>
 			<div className="image-pipeline-canvas">
+				<ConnectionColorLegend />
 				{editor ? (
-					<div className="ExampleSelector">
-						<span className="ExampleSelector-label">Examples</span>
-						<div className="ExampleSelector-controls">
-							<select
-								value={selectedExample}
-								onChange={(e) =>
-									setSelectedExample(e.target.value as 'image-generator' | 'image-space')
-								}
-							>
-								<option value="image-generator">Image generator</option>
-								<option value="image-space">Image Space</option>
-							</select>
-							<button
-								type="button"
-								onClick={() => {
-									loadExample(editor, selectedExample)
-								}}
-							>
-								Load
-							</button>
-						</div>
-					</div>
+					<ExampleSelector
+						selectedExample={selectedExample}
+						onExampleChange={setSelectedExample}
+						onLoad={() => loadExample(editor, selectedExample)}
+					/>
 				) : null}
 				<Tldraw
 					persistenceKey="huggingui-pipeline-v3"

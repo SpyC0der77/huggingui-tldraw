@@ -7,19 +7,19 @@ import {
 } from '../constants'
 import { PortId, ShapePort } from '../ports/Port'
 import { NodeShape } from './NodeShapeUtil'
-import { BooleanNodeDefinition } from './types/BooleanNode'
-import { EnumNodeDefinition } from './types/EnumNode'
-import { GenerateNodeDefinition } from './types/GenerateNode'
-import { IteratorNodeDefinition } from './types/IteratorNode'
-import { LoadImageNodeDefinition } from './types/LoadImageNode'
-import { ModelNodeDefinition } from './types/ModelNode'
-import { NumberNodeDefinition } from './types/NumberNode'
-import { PreviewNodeDefinition } from './types/PreviewNode'
-import { PromptNodeDefinition } from './types/PromptNode'
-import { RouterNodeDefinition } from './types/RouterNode'
-import { RunSpaceNodeDefinition } from './types/RunSpaceNode'
-import { SpaceNodeDefinition } from './types/SpaceNode'
-import { TextNodeDefinition } from './types/TextNode'
+import { BooleanNodeDefinition } from './types/input/BooleanNode'
+import { EnumNodeDefinition } from './types/input/EnumNode'
+import { ImageNodeDefinition } from './types/input/ImageNode'
+import { ModelNodeDefinition } from './types/input/ModelNode'
+import { NumberNodeDefinition } from './types/input/NumberNode'
+import { PromptNodeDefinition } from './types/input/PromptNode'
+import { SpaceNodeDefinition } from './types/input/SpaceNode'
+import { TextNodeDefinition } from './types/input/TextNode'
+import { PreviewNodeDefinition } from './types/preview/PreviewNode'
+import { GenerateNodeDefinition } from './types/inference/GenerateNode'
+import { ListIteratorNodeDefinition } from './types/scripting/ListIteratorNode'
+import { RepeaterNodeDefinition } from './types/scripting/RepeaterNode'
+import { RunSpaceNodeDefinition } from './types/inference/RunSpaceNode'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -36,11 +36,11 @@ export const NodeDefinitions = {
 	space: SpaceNodeDefinition,
 	generate: GenerateNodeDefinition,
 	run_space: RunSpaceNodeDefinition,
-	load_image: LoadImageNodeDefinition,
+	image: ImageNodeDefinition,
 	preview: PreviewNodeDefinition,
 	number: NumberNodeDefinition,
-	router: RouterNodeDefinition,
-	iterator: IteratorNodeDefinition,
+	repeater: RepeaterNodeDefinition,
+	list_iterator: ListIteratorNodeDefinition,
 } as const
 
 /**
