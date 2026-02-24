@@ -17,8 +17,11 @@ import { SpaceNodeDefinition } from './types/input/SpaceNode'
 import { TextNodeDefinition } from './types/input/TextNode'
 import { PreviewNodeDefinition } from './types/preview/PreviewNode'
 import { GenerateNodeDefinition } from './types/inference/GenerateNode'
+import { JoinNodeDefinition } from './types/scripting/JoinNode'
 import { ListIteratorNodeDefinition } from './types/scripting/ListIteratorNode'
+import { RandomNodeDefinition } from './types/scripting/RandomNode'
 import { RepeaterNodeDefinition } from './types/scripting/RepeaterNode'
+import { DelayNodeDefinition } from './types/scripting/DelayNode'
 import { RunSpaceNodeDefinition } from './types/inference/RunSpaceNode'
 import {
 	ExecutionResult,
@@ -41,6 +44,9 @@ export const NodeDefinitions = {
 	number: NumberNodeDefinition,
 	repeater: RepeaterNodeDefinition,
 	list_iterator: ListIteratorNodeDefinition,
+	join: JoinNodeDefinition,
+	delay: DelayNodeDefinition,
+	random: RandomNodeDefinition,
 } as const
 
 /**

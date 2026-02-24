@@ -67,6 +67,9 @@ export function OnCanvasNodePicker() {
 			<TldrawUiMenuGroup id="scripting">
 				<OnCanvasNodePickerItem definition={nodeDefs.list_iterator} onClose={onClose} />
 				<OnCanvasNodePickerItem definition={nodeDefs.repeater} onClose={onClose} />
+				<OnCanvasNodePickerItem definition={nodeDefs.join} onClose={onClose} />
+				<OnCanvasNodePickerItem definition={nodeDefs.delay} onClose={onClose} />
+				<OnCanvasNodePickerItem definition={nodeDefs.random} onClose={onClose} />
 			</TldrawUiMenuGroup>
 		</OnCanvasNodePickerDialog>
 	)
