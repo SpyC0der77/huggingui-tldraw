@@ -309,7 +309,7 @@ function RunSpaceNodeComponent({ shape, node }: NodeComponentProps<RunSpaceNode>
 
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{node.lastResultUrl ? (

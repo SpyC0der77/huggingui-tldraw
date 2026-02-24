@@ -104,7 +104,7 @@ function PreviewNodeComponent({ shape, node }: NodeComponentProps<PreviewNode>) 
 			</NodeRow>
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{displayUrl ? (

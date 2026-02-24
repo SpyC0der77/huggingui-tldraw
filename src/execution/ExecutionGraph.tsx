@@ -155,7 +155,7 @@ export class ExecutionGraph {
 		this.editor.updateShape({
 			id: nodeId,
 			type: node.shape.type,
-			props: { isOutOfDate: true },
+			props: { isOutOfDate: true, isExecuting: true },
 		})
 		try {
 			const outputs = await executeNode(this.editor, node.shape, inputs)
@@ -175,7 +175,7 @@ export class ExecutionGraph {
 			this.editor.updateShape({
 				id: nodeId,
 				type: node.shape.type,
-				props: { isOutOfDate: false },
+				props: { isOutOfDate: false, isExecuting: false },
 			})
 		}
 
@@ -220,6 +220,7 @@ export class ExecutionGraph {
 				props: {
 					node: { ...listIteratorNode, completedCount: 0, totalCount: 0, lastResultUrl: null },
 					isOutOfDate: false,
+					isExecuting: false,
 				},
 			})
 			return
@@ -232,7 +233,7 @@ export class ExecutionGraph {
 		this.editor.updateShape({
 			id: nodeId,
 			type: node.shape.type,
-			props: { isOutOfDate: true },
+			props: { isOutOfDate: true, isExecuting: true },
 		})
 
 		const downstreamByPort = new Map<string, { shapeId: TLShapeId; portId: string }[]>()
@@ -333,7 +334,7 @@ export class ExecutionGraph {
 			this.editor.updateShape({
 				id: nodeId,
 				type: node.shape.type,
-				props: { isOutOfDate: false },
+				props: { isOutOfDate: false, isExecuting: false },
 			})
 		}
 	}

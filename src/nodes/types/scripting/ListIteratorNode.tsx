@@ -186,7 +186,7 @@ function ListIteratorNodeComponent({ shape, node }: NodeComponentProps<ListItera
 			</NodeRow>
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{node.lastResultUrl ? (
