@@ -1,9 +1,9 @@
 import { T, TldrawUiSlider, useEditor } from 'tldraw'
-import { NumberIcon } from '../../components/icons/NumberIcon'
-import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../constants'
-import { ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { NodeShape } from '../NodeShapeUtil'
+import { NumberIcon } from '../../../components/icons/NumberIcon'
+import { NODE_HEADER_HEIGHT_PX, NODE_ROW_HEIGHT_PX, NODE_WIDTH_PX } from '../../../constants'
+import { ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -11,7 +11,7 @@ import {
 	NodeDefinition,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 export type NumberNode = T.TypeOf<typeof NumberNode>
 export const NumberNode = T.object({

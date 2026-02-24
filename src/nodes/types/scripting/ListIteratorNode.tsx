@@ -1,21 +1,19 @@
 import classNames from 'classnames'
 import { T, useEditor, useValue } from 'tldraw'
-import { apiGenerate } from '../../api/pipelineApi'
-import { IteratorIcon } from '../../components/icons/IteratorIcon'
+import { ListIteratorIcon } from '../../../components/icons/ListIteratorIcon'
 import {
 	NODE_HEADER_HEIGHT_PX,
 	NODE_IMAGE_PREVIEW_HEIGHT_PX,
 	NODE_ROW_HEADER_GAP_PX,
 	NODE_ROW_HEIGHT_PX,
 	NODE_WIDTH_PX,
-} from '../../constants'
-import { Port, ShapePort } from '../../ports/Port'
-import { getNodeInputPortValues } from '../nodePorts'
-import { NodeShape } from '../NodeShapeUtil'
+} from '../../../constants'
+import { Port, ShapePort } from '../../../ports/Port'
+import { getNodeInputPortValues } from '../../nodePorts'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	areAnyInputsOutOfDate,
 	ExecutionResult,
-	getInputText,
 	InfoValues,
 	InputValues,
 	NodeComponentProps,
@@ -24,29 +22,28 @@ import {
 	NodePortLabel,
 	NodeRow,
 	updateNode,
-} from './shared'
+} from '../shared'
 
-export type IteratorNode = T.TypeOf<typeof IteratorNode>
-export const IteratorNode = T.object({
-	type: T.literal('iterator'),
+export type ListIteratorNode = T.TypeOf<typeof ListIteratorNode>
+export const ListIteratorNode = T.object({
+	type: T.literal('list_iterator'),
 	items: T.string,
 	completedCount: T.number,
 	totalCount: T.number,
 	lastResultUrl: T.string.nullable(),
 })
 
-export class IteratorNodeDefinition extends NodeDefinition<IteratorNode> {
-	static type = 'iterator'
-	static validator = IteratorNode
-	title = 'Iterator'
-	heading = 'Iterator'
-	hidden = true as const
-	icon = (<IteratorIcon />)
-	category = 'utility'
+export class ListIteratorNodeDefinition extends NodeDefinition<ListIteratorNode> {
+	static type = 'list_iterator'
+	static validator = ListIteratorNode
+	title = 'List Iterator'
+	heading = 'List Iterator'
+	icon = (<ListIteratorIcon />)
+	category = 'scripting'
 	resultKeys = ['lastResultUrl', 'completedCount', 'totalCount'] as const
-	getDefault(): IteratorNode {
+	getDefault(): ListIteratorNode {
 		return {
-			type: 'iterator',
+			type: 'list_iterator',
 			items: 'cat\ndog\nbird',
 			completedCount: 0,
 			totalCount: 0,
@@ -84,51 +81,18 @@ export class IteratorNodeDefinition extends NodeDefinition<IteratorNode> {
 		}
 	}
 	async execute(
-		shape: NodeShape,
-		node: IteratorNode,
-		inputs: InputValues
+		_shape: NodeShape,
+		node: ListIteratorNode,
+		_inputs: InputValues
 	): Promise<ExecutionResult> {
-		const items = node.items
-			.split('\n')
-			.map((s) => s.trim())
-			.filter((s) => s.length > 0)
-
-		if (items.length === 0) {
-			updateNode<IteratorNode>(this.editor, shape, (n) => ({
-				...n,
-				completedCount: 0,
-				totalCount: 0,
-				lastResultUrl: null,
-			}))
-			return { output: null, current_item: null }
+		// List Iterator execution is handled by ExecutionGraph - it runs the downstream
+		// node for each item. This is never called in practice.
+		return {
+			output: node.lastResultUrl,
+			current_item: node.items.split('\n').map((s) => s.trim()).filter(Boolean).pop() ?? null,
 		}
-
-		updateNode<IteratorNode>(this.editor, shape, (n) => ({
-			...n,
-			completedCount: 0,
-			totalCount: items.length,
-		}))
-
-		const template = getInputText(inputs, 'template')
-
-		let lastResult: string | null = null
-		for (let i = 0; i < items.length; i++) {
-			const prompt = template ? `${template}, ${items[i]}` : items[i]
-			const result = await apiGenerate({
-				model: 'hf:auto:black-forest-labs/FLUX.1-schnell',
-				prompt,
-			})
-			lastResult = result.imageUrl
-			updateNode<IteratorNode>(this.editor, shape, (n) => ({
-				...n,
-				completedCount: i + 1,
-				lastResultUrl: lastResult,
-			}))
-		}
-
-		return { output: lastResult, current_item: items[items.length - 1] }
 	}
-	getOutputInfo(shape: NodeShape, node: IteratorNode, inputs: InfoValues): InfoValues {
+	getOutputInfo(shape: NodeShape, node: ListIteratorNode, inputs: InfoValues): InfoValues {
 		const items = node.items
 			.split('\n')
 			.map((s) => s.trim())
@@ -151,10 +115,10 @@ export class IteratorNodeDefinition extends NodeDefinition<IteratorNode> {
 			},
 		}
 	}
-	Component = IteratorNodeComponent
+	Component = ListIteratorNodeComponent
 }
 
-function IteratorNodeComponent({ shape, node }: NodeComponentProps<IteratorNode>) {
+function ListIteratorNodeComponent({ shape, node }: NodeComponentProps<ListIteratorNode>) {
 	const editor = useEditor()
 
 	const templateInput = useValue(
@@ -185,7 +149,7 @@ function IteratorNodeComponent({ shape, node }: NodeComponentProps<IteratorNode>
 					value={node.items}
 					placeholder="One item per line..."
 					onChange={(e) =>
-						updateNode<IteratorNode>(editor, shape, (n) => ({
+						updateNode<ListIteratorNode>(editor, shape, (n) => ({
 							...n,
 							items: e.target.value,
 						}))
@@ -222,11 +186,11 @@ function IteratorNodeComponent({ shape, node }: NodeComponentProps<IteratorNode>
 			</NodeRow>
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{node.lastResultUrl ? (
-					<NodeImage src={node.lastResultUrl} alt="Iterator result" />
+					<NodeImage src={node.lastResultUrl} alt="List Iterator result" />
 				) : (
 					<div className="NodeImagePreview-empty">
 						<span>Run to iterate items</span>

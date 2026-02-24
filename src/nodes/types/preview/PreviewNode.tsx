@@ -1,16 +1,16 @@
 import classNames from 'classnames'
 import { T, useEditor, useValue } from 'tldraw'
-import { PreviewIcon } from '../../components/icons/PreviewIcon'
+import { PreviewIcon } from '../../../components/icons/PreviewIcon'
 import {
 	NODE_HEADER_HEIGHT_PX,
 	NODE_IMAGE_PREVIEW_HEIGHT_PX,
 	NODE_ROW_HEADER_GAP_PX,
 	NODE_ROW_HEIGHT_PX,
-} from '../../constants'
-import { Port, ShapePort } from '../../ports/Port'
-import { sleep } from '../../utils/sleep'
-import { getNodeInputPortValues } from '../nodePorts'
-import { NodeShape } from '../NodeShapeUtil'
+} from '../../../constants'
+import { Port, ShapePort } from '../../../ports/Port'
+import { sleep } from '../../../utils/sleep'
+import { getNodeInputPortValues } from '../../nodePorts'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	ExecutionResult,
 	InfoValues,
@@ -22,7 +22,7 @@ import {
 	NodeRow,
 	STOP_EXECUTION,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 export type PreviewNode = T.TypeOf<typeof PreviewNode>
 export const PreviewNode = T.object({
@@ -104,7 +104,7 @@ function PreviewNodeComponent({ shape, node }: NodeComponentProps<PreviewNode>) 
 			</NodeRow>
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{displayUrl ? (

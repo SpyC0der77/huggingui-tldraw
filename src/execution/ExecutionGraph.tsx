@@ -141,6 +141,12 @@ export class ExecutionGraph {
 			}
 		}
 
+		// Special handling for list_iterator: run downstream node for each item
+		if (node.shape.props.node.type === 'list_iterator') {
+			await this.executeListIteratorNode(nodeId, node, inputs)
+			return
+		}
+
 		this.nodesById.set(nodeId, {
 			...node,
 			state: 'executing',
@@ -149,7 +155,7 @@ export class ExecutionGraph {
 		this.editor.updateShape({
 			id: nodeId,
 			type: node.shape.type,
-			props: { isOutOfDate: true },
+			props: { isOutOfDate: true, isExecuting: true },
 		})
 		try {
 			const outputs = await executeNode(this.editor, node.shape, inputs)
@@ -169,7 +175,7 @@ export class ExecutionGraph {
 			this.editor.updateShape({
 				id: nodeId,
 				type: node.shape.type,
-				props: { isOutOfDate: false },
+				props: { isOutOfDate: false, isExecuting: false },
 			})
 		}
 
@@ -181,6 +187,156 @@ export class ExecutionGraph {
 		}
 
 		await Promise.all(executingDependentPromises)
+	}
+
+	private async executeListIteratorNode(
+		nodeId: TLShapeId,
+		node: ExecutionGraphNode,
+		inputs: Record<string, PipelineValue | PipelineValue[]>
+	) {
+		const listIteratorNode = node.shape.props.node as {
+			type: 'list_iterator'
+			items: string
+			completedCount: number
+			totalCount: number
+			lastResultUrl: string | null
+		}
+		const items = listIteratorNode.items
+			.split('\n')
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0)
+
+		const template = (inputs.template as string) ?? ''
+
+		if (items.length === 0) {
+			this.nodesById.set(nodeId, {
+				...node,
+				state: 'executed',
+				outputs: { output: null, current_item: null },
+			})
+			this.editor.updateShape({
+				id: nodeId,
+				type: node.shape.type,
+				props: {
+					node: { ...listIteratorNode, completedCount: 0, totalCount: 0, lastResultUrl: null },
+					isOutOfDate: false,
+					isExecuting: false,
+				},
+			})
+			return
+		}
+
+		this.nodesById.set(nodeId, {
+			...node,
+			state: 'executing',
+		})
+		this.editor.updateShape({
+			id: nodeId,
+			type: node.shape.type,
+			props: { isOutOfDate: true, isExecuting: true },
+		})
+
+		const downstreamByPort = new Map<string, { shapeId: TLShapeId; portId: string }[]>()
+		for (const conn of node.connections) {
+			if (!conn || conn.terminal !== 'start') continue
+			const list = downstreamByPort.get(conn.ownPortId) ?? []
+			list.push({ shapeId: conn.connectedShapeId, portId: conn.connectedPortId })
+			downstreamByPort.set(conn.ownPortId, list)
+		}
+
+		const currentItemDownstream = downstreamByPort.get('current_item') ?? []
+		const outputDownstream = downstreamByPort.get('output') ?? []
+
+		let lastResult: PipelineValue = null
+
+		try {
+			for (let i = 0; i < items.length; i++) {
+				if (this.state !== 'executing') return
+
+				const item = template ? `${template}, ${items[i]}` : items[i]
+
+				// Reset downstream nodes so they can run again this iteration
+				if (i > 0) {
+					this.resetDownstreamToWaiting(nodeId)
+				}
+
+				const iteratorOutputs: ExecutionResult = {
+					current_item: item,
+					output: lastResult,
+				}
+
+				this.nodesById.set(nodeId, {
+					...node,
+					state: 'executed',
+					outputs: iteratorOutputs,
+				})
+
+				// Run downstream of current_item first (e.g. Generate)
+				for (const { shapeId } of currentItemDownstream) {
+					await this.executeNodeIfReady(shapeId)
+				}
+
+				// Get result from downstream - use first current_item downstream's output
+				for (const { shapeId } of currentItemDownstream) {
+					const executed = this.nodesById.get(shapeId)
+					if (executed?.state === 'executed' && executed.outputs) {
+						const out = executed.outputs['output'] ?? Object.values(executed.outputs)[0]
+						if (out != null) {
+							lastResult = out as PipelineValue
+							break
+						}
+					}
+				}
+
+				// Update list iterator output for downstream of output port (e.g. Preview)
+				iteratorOutputs.output = lastResult
+				this.nodesById.set(nodeId, {
+					...node,
+					state: 'executed',
+					outputs: iteratorOutputs,
+				})
+
+				// Run downstream of output
+				for (const { shapeId } of outputDownstream) {
+					await this.executeNodeIfReady(shapeId)
+				}
+
+				this.editor.updateShape({
+					id: nodeId,
+					type: node.shape.type,
+					props: {
+						node: {
+							...listIteratorNode,
+							completedCount: i + 1,
+							totalCount: items.length,
+							lastResultUrl: typeof lastResult === 'string' ? lastResult : null,
+						},
+						isOutOfDate: i < items.length - 1,
+					},
+				})
+			}
+
+			this.nodesById.set(nodeId, {
+				...node,
+				state: 'executed',
+				outputs: {
+					current_item: items[items.length - 1],
+					output: lastResult,
+				},
+			})
+		} catch (error) {
+			this.nodesById.set(nodeId, {
+				...node,
+				state: 'failed',
+				error: error instanceof Error ? error.message : String(error),
+			})
+		} finally {
+			this.editor.updateShape({
+				id: nodeId,
+				type: node.shape.type,
+				props: { isOutOfDate: false, isExecuting: false },
+			})
+		}
 	}
 
 	getNodeStatus(nodeId: TLShapeId) {
@@ -209,6 +365,37 @@ export class ExecutionGraph {
 		}
 
 		return snapshot
+	}
+
+	private resetDownstreamToWaiting(shapeId: TLShapeId) {
+		const toReset = new Set<TLShapeId>()
+		const toVisit = [shapeId]
+
+		while (toVisit.length > 0) {
+			const id = toVisit.pop()!
+			if (toReset.has(id)) continue
+
+			const n = this.nodesById.get(id)
+			if (!n) continue
+
+			toReset.add(id)
+			for (const conn of n.connections) {
+				if (!conn || conn.terminal !== 'start') continue
+				toVisit.push(conn.connectedShapeId)
+			}
+		}
+
+		for (const id of toReset) {
+			if (id === shapeId) continue
+			const n = this.nodesById.get(id)
+			if (n && n.state !== 'failed') {
+				this.nodesById.set(id, {
+					state: 'waiting',
+					shape: n.shape,
+					connections: n.connections,
+				})
+			}
+		}
 	}
 
 	private getBlockingFailureMessage(node: ExecutionGraphNode): string | null {

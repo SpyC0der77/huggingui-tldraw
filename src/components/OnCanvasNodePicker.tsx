@@ -55,7 +55,7 @@ export function OnCanvasNodePicker() {
 				<OnCanvasNodePickerItem definition={nodeDefs.number} onClose={onClose} />
 				<OnCanvasNodePickerItem definition={nodeDefs.boolean} onClose={onClose} />
 				<OnCanvasNodePickerItem definition={nodeDefs.space} onClose={onClose} />
-				<OnCanvasNodePickerItem definition={nodeDefs.load_image} onClose={onClose} />
+				<OnCanvasNodePickerItem definition={nodeDefs.image} onClose={onClose} />
 			</TldrawUiMenuGroup>
 			<TldrawUiMenuGroup id="process">
 				<OnCanvasNodePickerItem definition={nodeDefs.generate} onClose={onClose} />
@@ -63,6 +63,10 @@ export function OnCanvasNodePicker() {
 			</TldrawUiMenuGroup>
 			<TldrawUiMenuGroup id="output">
 				<OnCanvasNodePickerItem definition={nodeDefs.preview} onClose={onClose} />
+			</TldrawUiMenuGroup>
+			<TldrawUiMenuGroup id="scripting">
+				<OnCanvasNodePickerItem definition={nodeDefs.list_iterator} onClose={onClose} />
+				<OnCanvasNodePickerItem definition={nodeDefs.repeater} onClose={onClose} />
 			</TldrawUiMenuGroup>
 		</OnCanvasNodePickerDialog>
 	)

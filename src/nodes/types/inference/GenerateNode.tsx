@@ -1,18 +1,18 @@
 import classNames from 'classnames'
 import { T, useEditor, useValue } from 'tldraw'
 import { describeModelRef } from '@/lib/modelRef'
-import { apiGenerate } from '../../api/pipelineApi'
-import { GenerateIcon } from '../../components/icons/GenerateIcon'
+import { apiGenerate } from '../../../api/pipelineApi'
+import { GenerateIcon } from '../../../components/icons/GenerateIcon'
 import {
 	NODE_HEADER_HEIGHT_PX,
 	NODE_IMAGE_PREVIEW_HEIGHT_PX,
 	NODE_ROW_HEADER_GAP_PX,
 	NODE_ROW_HEIGHT_PX,
 	NODE_WIDTH_PX,
-} from '../../constants'
-import { Port, ShapePort } from '../../ports/Port'
-import { getNodeInputPortValues } from '../nodePorts'
-import { NodeShape } from '../NodeShapeUtil'
+} from '../../../constants'
+import { Port, ShapePort } from '../../../ports/Port'
+import { getNodeInputPortValues } from '../../nodePorts'
+import { NodeShape } from '../../NodeShapeUtil'
 import {
 	areAnyInputsOutOfDate,
 	ExecutionResult,
@@ -28,7 +28,7 @@ import {
 	NodeRow,
 	STOP_EXECUTION,
 	updateNode,
-} from './shared'
+} from '../shared'
 
 export type GenerateNode = T.TypeOf<typeof GenerateNode>
 export const GenerateNode = T.object({
@@ -246,7 +246,7 @@ function GenerateNodeComponent({ shape, node }: NodeComponentProps<GenerateNode>
 			</NodeRow>
 			<div
 				className={classNames('NodeImagePreview', {
-					NodeImagePreview_loading: shape.props.isOutOfDate,
+					NodeImagePreview_loading: shape.props.isExecuting === true,
 				})}
 			>
 				{node.lastResultUrl ? (

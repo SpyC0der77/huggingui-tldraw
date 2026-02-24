@@ -49,7 +49,7 @@ const NODE_TYPE = 'node'
 
 declare module 'tldraw' {
 	export interface TLGlobalShapePropsMap {
-		[NODE_TYPE]: { node: NodeType; isOutOfDate: boolean }
+		[NODE_TYPE]: { node: NodeType; isOutOfDate: boolean; isExecuting: boolean }
 	}
 }
 
@@ -61,12 +61,14 @@ export class NodeShapeUtil extends ShapeUtil<NodeShape> {
 	static override props: RecordProps<NodeShape> = {
 		node: NodeType,
 		isOutOfDate: T.boolean,
+		isExecuting: T.boolean,
 	}
 
 	getDefaultProps(): NodeShape['props'] {
 		return {
 			node: getNodeDefinition(this.editor, 'prompt').getDefault(),
 			isOutOfDate: false,
+			isExecuting: false,
 		}
 	}
 

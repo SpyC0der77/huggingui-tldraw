@@ -25,7 +25,6 @@ export type PortDataType =
 	| 'space'
 	| 'number'
 	| 'boolean'
-	| 'latent'
 	| 'any'
 
 export const PORT_TYPE_COLORS: Record<PortDataType, string> = {
@@ -35,6 +34,5 @@ export const PORT_TYPE_COLORS: Record<PortDataType, string> = {
 	space: '#14b8a6',
 	number: '#9e9e9e',
 	boolean: '#f59e0b',
-	latent: '#ff9800',
 	any: '#c08520',
 }
