@@ -6,6 +6,14 @@ export default defineConfig({
 		environment: 'node',
 		globals: true,
 		include: ['**/*.test.ts', '**/*.test.tsx'],
+		restoreMocks: true,
+		clearMocks: true,
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'html'],
+			include: ['src/**/*.ts', 'src/**/*.tsx', 'lib/**/*.ts'],
+			exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.d.ts'],
+		},
 	},
 	resolve: {
 		alias: {

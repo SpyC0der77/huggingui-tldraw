@@ -41,7 +41,15 @@ describe('delayExecute', () => {
 		vi.useFakeTimers()
 		try {
 			const promise = delayExecute({ delayMs: 50 }, { input: 'hello' })
-			vi.advanceTimersByTime(50)
+			let resolved = false
+			promise.then(() => {
+				resolved = true
+			})
+
+			await vi.advanceTimersByTimeAsync(49)
+			expect(resolved).toBe(false)
+
+			await vi.advanceTimersByTimeAsync(1)
 			const result = await promise
 			expect(result.output).toBe('hello')
 		} finally {
