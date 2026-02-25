@@ -132,7 +132,6 @@ function JoinNodeComponent({ shape, node }: NodeComponentProps<JoinNode>) {
 				/>
 			</NodeRow>
 			<NodeRow>
-				<Port shapeId={shape.id} portId="output" />
 				<NodePortLabel dataType="text">Output</NodePortLabel>
 			</NodeRow>
 		</>

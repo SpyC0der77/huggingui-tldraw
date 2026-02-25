@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createShapeId, Editor, TLComponents, Tldraw, TldrawOptions } from 'tldraw'
 import { ConnectionColorLegend } from './components/ConnectionColorLegend'
-import { ExampleSelector } from './components/ExampleSelector'
+import { ExampleSelector, type ExampleId } from './components/ExampleSelector'
 import { HuggingFaceAuthPanel } from './components/HuggingFaceAuthPanel'
 import { ExecutionErrorModal } from './components/ExecutionErrorModal'
 import { ImagePipelineSidebar } from './components/ImagePipelineSidebar'
@@ -71,9 +71,7 @@ function restrictToNodesAndConnections(editor: Editor) {
 
 function App() {
 	const [editor, setEditor] = useState<Editor | null>(null)
-	const [selectedExample, setSelectedExample] = useState<'image-generator' | 'image-space'>(
-		'image-generator'
-	)
+	const [selectedExample, setSelectedExample] = useState<ExampleId>('image-generator')
 
 	return (
 		<div className="image-pipeline-layout" style={{ position: 'fixed', inset: 0 }}>
@@ -133,7 +131,7 @@ function App() {
 	)
 }
 
-function loadExample(editor: Editor, example: 'image-generator' | 'image-space') {
+function loadExample(editor: Editor, example: ExampleId) {
 	editor.run(() => {
 		const allShapeIds = editor.getCurrentPageShapes().map((shape) => shape.id)
 		if (allShapeIds.length > 0) {
@@ -191,7 +189,7 @@ function createImageGeneratorExample(editor: Editor) {
 				node: {
 					type: 'model',
 					provider: 'auto',
-					modelId: 'black-forest-labs/FLUX.1-schnell',
+					modelId: 'black-forest-labs/FLUX.2-klein-4B',
 					spaceId: '',
 					spaceApiName: '',
 					spaceArgsTemplate: '',
@@ -379,7 +377,7 @@ function createDefaultPipeline(editor: Editor) {
 				node: {
 					type: 'model',
 					provider: 'auto',
-					modelId: 'black-forest-labs/FLUX.1-schnell',
+					modelId: 'black-forest-labs/FLUX.2-klein-4B',
 					spaceId: '',
 					spaceApiName: '/predict',
 					spaceArgsTemplate: '["{prompt}"]',

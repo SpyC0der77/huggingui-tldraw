@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+export type ExampleId = 'image-generator' | 'image-space'
+
 interface ExampleSelectorProps {
-	selectedExample: 'image-generator' | 'image-space'
-	onExampleChange: (example: 'image-generator' | 'image-space') => void
+	selectedExample: ExampleId
+	onExampleChange: (example: ExampleId) => void
 	onLoad: () => void
 }
 
@@ -32,7 +34,7 @@ export function ExampleSelector({
 				<select
 					value={selectedExample}
 					onChange={(e) =>
-						onExampleChange(e.target.value as 'image-generator' | 'image-space')
+						onExampleChange(e.target.value as ExampleId)
 					}
 					className={cn(
 						'h-8 min-w-[168px] max-[900px]:min-w-[140px] rounded-md border border-input bg-background px-3 text-sm',
