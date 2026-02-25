@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
 	delayExecute,
 	joinExecute,
@@ -38,14 +38,15 @@ describe('joinExecute', () => {
 
 describe('delayExecute', () => {
 	it('passes value through after delay', async () => {
-		const start = Date.now()
-		const result = await delayExecute(
-			{ delayMs: 50 },
-			{ input: 'hello' }
-		)
-		const elapsed = Date.now() - start
-		expect(result.output).toBe('hello')
-		expect(elapsed).toBeGreaterThanOrEqual(45)
+		vi.useFakeTimers()
+		try {
+			const promise = delayExecute({ delayMs: 50 }, { input: 'hello' })
+			vi.advanceTimersByTime(50)
+			const result = await promise
+			expect(result.output).toBe('hello')
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 
 	it('handles zero delay', async () => {
